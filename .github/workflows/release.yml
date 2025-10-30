@@ -67,7 +67,7 @@ jobs:
           echo "${{ secrets.MVN_SETTINGS_SECURITY }}" > /home/runner/.m2/settings-security.xml
 
           # 执行mvn命令
-          mvn clean package install $MVN_OPT $BUILD_OPT
+          mvn clean package $MVN_OPT $BUILD_OPT
 
           echo "所有项目打包完成。"
 
