@@ -56,7 +56,7 @@ git tag -a "RELEASE-$NEW_VER" -m "release version $NEW_VER"
 # git push main and tag
 echo "git push"
 git push
-git push Github "RELEASE-$NEW_VER"
+git push origin "RELEASE-$NEW_VER"
 
 echo "done!"
 
