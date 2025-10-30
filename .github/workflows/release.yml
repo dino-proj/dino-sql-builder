@@ -1,0 +1,91 @@
+name: Publish package to the Maven Central Repository
+
+# Run workflow on commits to the `main` branch
+on:
+  push:
+    tags:
+      - 'RELEASE-*'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'info'
+        type: choice
+        options:
+          - error
+          - warning
+          - info
+          - debug
+      autoPublish:
+        description: 'Auto publish'
+        required: true
+        default: true
+        type: boolean
+      waitUntil:
+        description: 'Wait until'
+        required: true
+        type: choice
+        options:
+          - published
+          - uploaded
+          - validated
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    env:
+      MVN_OPT: '--errors --no-transfer-progress --batch-mode'
+      BUILD_OPT: '-Dmaven.test.skip=true -P publish'
+      MVN_NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
+      MVN_NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
+      AUTO_PUBLISH: ${{ github.event.inputs.autoPublish || true }}
+      WAIT_UNTIL: ${{ github.event.inputs.waitUntil }}
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v5
+
+      - name: Install Java and Maven
+        uses: actions/setup-java@v5
+        with:
+          java-version: 17
+          distribution: 'temurin'
+          server-id: central
+          server-username: MVN_NEXUS_USERNAME
+          server-password: MVN_NEXUS_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          cache: 'maven'
+
+      - name: Package & Install to Local Repository
+        run: |
+          touch /home/runner/.m2/settings-security.xml
+          # 将secrets.MVN_SETTINGS_SECURITY写入到settings-security.xml文件
+          echo "${{ secrets.MVN_SETTINGS_SECURITY }}" > /home/runner/.m2/settings-security.xml
+
+          # 执行mvn命令
+          mvn clean package install $MVN_OPT $BUILD_OPT
+
+          echo "所有项目打包完成。"
+
+      - name: Publish to Maven Central
+        run: |
+          echo "是否自动发布：$AUTO_PUBLISH"
+          echo "等待条件：$WAIT_UNTIL"
+          # 定义发布参数
+          if [ "$AUTO_PUBLISH" = false ]; then
+            export DEPLOY_AUTO_PUBLISH=false
+            export DEPLOY_WAIT_UNTIL=${WAIT_UNTIL:-"uploaded"}
+          else
+            export DEPLOY_AUTO_PUBLISH=true
+            export DEPLOY_WAIT_UNTIL=${WAIT_UNTIL:-"published"}
+          fi
+
+          echo "=============== 开始发布到Maven中央仓库 ==============="
+          # 执行mvn命令
+          mvn deploy $MVN_OPT $BUILD_OPT $DEPLOY_OPT
+
+          echo "所有项目发布完成。"
