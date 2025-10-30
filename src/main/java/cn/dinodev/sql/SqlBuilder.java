@@ -4,21 +4,24 @@
 package cn.dinodev.sql;
 
 /**
+ * SQL 构建器接口。
+ * <p>
+ * 用于生成 SQL 语句及其参数。
  *
  * @author Cody Lu
- * @date 2022-03-07 19:13:51
+ * @since 2022-03-07
  */
 
 public interface SqlBuilder {
   /**
-   * 获取生成的sql语句
-   * @return
+   * 获取生成的 SQL 语句。
+   * @return 生成的 SQL 字符串
    */
   String getSql();
 
   /**
-   * 获取sql语句需要的参数数组
-   * @return
+   * 获取 SQL 语句所需的参数数组。
+   * @return SQL 参数数组
    */
   Object[] getParams();
 

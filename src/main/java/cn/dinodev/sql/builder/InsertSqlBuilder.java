@@ -10,25 +10,36 @@ import java.util.Objects;
 import cn.dinodev.sql.SqlBuilder;
 
 /**
- * SQL INSERT语句构建器
- * 用于构建INSERT SQL语句的Builder类，支持指定列和值的插入操作
+ * SQL INSERT语句构建器。
+ * <p>
+ * 用于构建 INSERT SQL 语句的 Builder 类，支持指定列和值的插入操作。
  *
  * @author Cody Lu
- * @date 2022-03-07 19:21:21
+ * @since 2022-03-07
  */
 
 public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
 
   private final String table;
 
+  /**
+   * 需要插入的列名集合。
+   */
   protected List<String> setColumns = new ArrayList<>();
 
+  /**
+   * 每列对应的值表达式集合。
+   */
   protected List<String> valueExps = new ArrayList<>();
 
+  /**
+   * 插入语句的参数值集合。
+   */
   protected List<Object> setParams = new ArrayList<>();
 
   /**
-   * 构造函数，创建指定表的INSERT语句构建器
+   * 构造函数，创建指定表的 INSERT 语句构建器。
+   *
    * @param table 表名
    */
   public InsertSqlBuilder(String table) {
@@ -36,7 +47,8 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
   }
 
   /**
-   * 设置列值，使用?占位符
+   * 设置列值，使用 ? 占位符。
+   *
    * @param col 列名
    * @param value 值
    * @return 当前构建器实例
@@ -46,7 +58,8 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
   }
 
   /**
-   * 设置列值，使用自定义表达式
+   * 设置列值，使用自定义表达式。
+   *
    * @param col 列名
    * @param valueExpr 值表达式
    * @param value 参数值
@@ -60,8 +73,9 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
   }
 
   /**
-   * 根据条件设置列值，使用?占位符
-   * @param cnd 条件，为true时才设置
+   * 根据条件设置列值，使用 ? 占位符。
+   *
+   * @param cnd 条件，为 true 时才设置
    * @param col 列名
    * @param value 值
    * @return 当前构建器实例
@@ -71,8 +85,9 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
   }
 
   /**
-   * 根据条件设置列值，使用自定义表达式
-   * @param cnd 条件，为true时才设置
+   * 根据条件设置列值，使用自定义表达式。
+   *
+   * @param cnd 条件，为 true 时才设置
    * @param col 列名
    * @param valueExpr 值表达式
    * @param value 参数值
@@ -86,7 +101,8 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
   }
 
   /**
-   * 当值不为null时设置列值
+   * 当值不为 null 时设置列值。
+   *
    * @param col 列名
    * @param value 值
    * @return 当前构建器实例
@@ -96,7 +112,8 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
   }
 
   /**
-   * 设置列值但不添加参数（用于函数调用等）
+   * 设置列值但不添加参数（用于函数调用等）。
+   *
    * @param col 列名
    * @param valueExpr 值表达式
    * @return 当前构建器实例
@@ -108,8 +125,9 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
   }
 
   /**
-   * 根据条件设置列值但不添加参数
-   * @param cnd 条件，为true时才设置
+   * 根据条件设置列值但不添加参数。
+   *
+   * @param cnd 条件，为 true 时才设置
    * @param col 列名
    * @param expr 值表达式
    * @return 当前构建器实例
@@ -122,7 +140,8 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
   }
 
   /**
-   * 设置JSON类型列值
+   * 设置 JSON 类型列值。
+   *
    * @param col 列名
    * @param value JSON值
    * @return 当前构建器实例
@@ -132,8 +151,9 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
   }
 
   /**
-   * 根据条件设置JSON类型列值
-   * @param cnd 条件，为true时才设置
+   * 根据条件设置 JSON 类型列值。
+   *
+   * @param cnd 条件，为 true 时才设置
    * @param col 列名
    * @param value JSON值
    * @return 当前构建器实例
@@ -146,7 +166,8 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
   }
 
   /**
-   * 当值不为null时设置JSON类型列值
+   * 当值不为 null 时设置 JSON 类型列值。
+   *
    * @param col 列名
    * @param value JSON值
    * @return 当前构建器实例
@@ -156,7 +177,8 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
   }
 
   /**
-   * 设置JSONB类型列值
+   * 设置 JSONB 类型列值。
+   *
    * @param col 列名
    * @param value JSONB值
    * @return 当前构建器实例
@@ -166,8 +188,9 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
   }
 
   /**
-   * 根据条件设置JSONB类型列值
-   * @param cnd 条件，为true时才设置
+   * 根据条件设置 JSONB 类型列值。
+   *
+   * @param cnd 条件，为 true 时才设置
    * @param col 列名
    * @param value JSONB值
    * @return 当前构建器实例
@@ -180,7 +203,8 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
   }
 
   /**
-   * 当值不为null时设置JSONB类型列值
+   * 当值不为 null 时设置 JSONB 类型列值。
+   *
    * @param col 列名
    * @param value JSONB值
    * @return 当前构建器实例
@@ -189,6 +213,11 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
     return setJsonIf(!Objects.isNull(value), col, value);
   }
 
+  /**
+   * 构建最终的 INSERT SQL 语句。
+   *
+   * @return 构建好的 INSERT SQL 语句字符串
+   */
   @Override
   public String getSql() {
     final StringBuilder sql = new StringBuilder(64);
@@ -198,6 +227,11 @@ public class InsertSqlBuilder implements SqlBuilder, SqlBuilderUtils {
     return sql.toString();
   }
 
+  /**
+   * 获取所有参数值数组。
+   *
+   * @return 参数值数组
+   */
   @Override
   public Object[] getParams() {
     return setParams.toArray(new Object[0]);

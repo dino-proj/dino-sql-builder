@@ -4,9 +4,12 @@
 package cn.dinodev.sql;
 
 /**
+ * SQL 逻辑运算符枚举类型。
+ * <p>
+ * 用于表示 SQL 查询中的 AND/OR 逻辑。
  *
  * @author Cody Lu
- * @date 2022-03-07 19:12:58
+ * @since 2022-03-07
  */
 
 public enum Logic {
@@ -22,12 +25,19 @@ public enum Logic {
   private final String logic;
 
   /**
+   * 构造方法。
    *
+   * @param logic 逻辑运算符字符串（AND 或 OR）
    */
   Logic(String logic) {
     this.logic = logic;
   }
 
+  /**
+   * 获取逻辑运算符字符串。
+   *
+   * @return 逻辑运算符字符串
+   */
   public String getLogic() {
     return logic;
   }

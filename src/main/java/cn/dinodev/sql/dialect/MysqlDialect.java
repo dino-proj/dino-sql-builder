@@ -8,9 +8,12 @@ import java.sql.DatabaseMetaData;
 import cn.dinodev.sql.utils.NamingUtils;
 
 /**
+ * MySQL 数据库方言实现。
+ * <p>
+ * 提供 MySQL 专用的 SQL 生成与命名转换逻辑。
  *
  * @author Cody Lu
- * @date 2022-03-07 19:14:39
+ * @since 2022-03-07
  */
 
 public class MysqlDialect implements Dialect {

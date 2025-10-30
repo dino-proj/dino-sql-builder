@@ -16,6 +16,9 @@ public final class NamingUtils {
 
   private static final char UNDER_SCORE_CHAR = '_';
 
+  private NamingUtils() {
+  }
+
   /**
    * 将下划线风格（snake_case）命名字符串转换为驼峰命名（camelCase）字符串。
    * 例如：user_name -> userName

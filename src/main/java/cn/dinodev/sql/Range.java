@@ -25,6 +25,14 @@ public interface Range<T extends Serializable> extends Serializable {
    */
   T getEnd();
 
+  /**
+   * 创建一个新的范围对象。
+   *
+   * @param begin 范围的起始值
+   * @param end 范围的结束值
+   * @param <T> 范围值的类型，必须实现 Serializable 接口
+   * @return 包含指定起始值和结束值的 Range 实例
+   */
   static <T extends Serializable> Range<T> of(T begin, T end) {
     return new Range<>() {
       private static final long serialVersionUID = 1L;

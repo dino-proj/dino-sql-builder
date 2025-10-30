@@ -12,11 +12,12 @@ import java.util.stream.Stream;
 import cn.dinodev.sql.utils.NamingUtils;
 
 /**
- * SQL UPDATE语句构建器
- * 用于构建UPDATE SQL语句的Builder类，支持SET子句和WHERE条件等
+ * SQL UPDATE语句构建器。
+ * <p>
+ * 用于构建 UPDATE SQL 语句的 Builder 类，支持 SET 子句和 WHERE 条件等。
  *
  * @author Cody Lu
- * @date 2022-03-07 19:20:39
+ * @since 2022-03-07
  */
 
 public final class UpdateSqlBuilder extends WhereSql<UpdateSqlBuilder> implements SqlBuilderUtils {

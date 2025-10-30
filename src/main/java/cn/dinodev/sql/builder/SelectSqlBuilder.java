@@ -11,9 +11,23 @@ import java.util.stream.Stream;
 import cn.dinodev.sql.dialect.Dialect;
 
 /**
+ * SQL SELECT语句构建器。
+ * <p>
+ * 用于构建 SELECT SQL 语句的 Builder 类，支持多表、分组、排序、连接等。
+ * <br>
+ * <b>使用示例：</b>
+ * <pre>
+ * SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "user")
+ *     .column("id", "name", "age")
+ *     .where("age > ?", 18)
+ *     .orderBy("age desc")
+ *     .limit(10);
+ * String sql = builder.getSql();
+ * Object[] params = builder.getParams();
+ * </pre>
  *
  * @author Cody Lu
- * @date 2022-03-07 19:21:00
+ * @since 2022-03-07
  */
 
 public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implements SqlBuilderUtils {
@@ -46,16 +60,18 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   private final Dialect dialect;
 
   /**
-   * 私有构造函数，防止直接实例化
-   * @param dialect 数据库方言
+   * 私有构造函数，防止直接实例化。
+   *
+   * @param dialect 数据库方言实例
    */
   private SelectSqlBuilder(final Dialect dialect) {
     this.dialect = dialect;
   }
 
   /**
-   * 私有构造函数，防止直接实例化
-   * @param dialect 数据库方言
+   * 私有构造函数，防止直接实例化。
+   *
+   * @param dialect 数据库方言实例
    * @param table 表名
    */
   private SelectSqlBuilder(final Dialect dialect, final String table) {
@@ -64,8 +80,9 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 私有构造函数，防止直接实例化
-   * @param dialect 数据库方言
+   * 私有构造函数，防止直接实例化。
+   *
+   * @param dialect 数据库方言实例
    * @param table 表名
    * @param alias 表别名
    */
@@ -75,8 +92,9 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 私有构造函数，防止直接实例化
-   * @param subQuery 子查询
+   * 私有构造函数，防止直接实例化。
+   *
+   * @param subQuery 子查询 SelectSqlBuilder 实例
    * @param alias 子查询别名
    */
   private SelectSqlBuilder(final SelectSqlBuilder subQuery, final String alias) {
@@ -86,9 +104,10 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 创建SelectSqlBuilder实例
-   * @param dialect 数据库方言
-   * @return 配置好的SelectSqlBuilder实例
+   * 创建 SelectSqlBuilder 实例。
+   *
+   * @param dialect 数据库方言实例
+   * @return 配置好的 SelectSqlBuilder 实例
    */
   public static SelectSqlBuilder create(final Dialect dialect) {
     SelectSqlBuilder builder = new SelectSqlBuilder(dialect);
@@ -97,16 +116,18 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 根据表名创建SelectSqlBuilder实例
+   * 根据表名创建 SelectSqlBuilder 实例。
    * <p>支持的格式：
-   * <p>- <code>"table1"</code>
-   * <p>- <code>"table1, table2"</code>
-   * <p>- <code>"table1 as t1"</code>
-   * <p>- <code>"table1 as t1 join table2 as t2 on t1.id=t2.id"</code>
+   * <ul>
+   *   <li>"table1"</li>
+   *   <li>"table1, table2"</li>
+   *   <li>"table1 as t1"</li>
+   *   <li>"table1 as t1 join table2 as t2 on t1.id=t2.id"</li>
+   * </ul>
    *
-   * @param dialect 数据库方言
+   * @param dialect 数据库方言实例
    * @param table 表名
-   * @return 配置好的SelectSqlBuilder实例
+   * @return SelectSqlBuilder 实例
    */
   public static SelectSqlBuilder create(final Dialect dialect, final String table) {
     SelectSqlBuilder builder = new SelectSqlBuilder(dialect, table);
@@ -115,13 +136,13 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 根据表名和别名创建SelectSqlBuilder实例
-   * <p>生成的sql片段为：table AS alias
+   * 根据表名和别名创建 SelectSqlBuilder 实例。
+   * <p>生成的 SQL 片段为：table AS alias
    *
-   * @param dialect 数据库方言
+   * @param dialect 数据库方言实例
    * @param table 表名
    * @param alias 表别名
-   * @return 配置好的SelectSqlBuilder实例
+   * @return SelectSqlBuilder 实例
    */
   public static SelectSqlBuilder create(final Dialect dialect, final String table, final String alias) {
     SelectSqlBuilder builder = new SelectSqlBuilder(dialect, table, alias);
@@ -130,10 +151,11 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 根据子查询创建SelectSqlBuilder实例
-   * @param subQuery 子查询
+   * 根据子查询创建 SelectSqlBuilder 实例。
+   *
+   * @param subQuery 子查询 SelectSqlBuilder 实例
    * @param alias 子查询的别名
-   * @return 配置好的SelectSqlBuilder实例
+   * @return SelectSqlBuilder 实例
    */
   public static SelectSqlBuilder create(final SelectSqlBuilder subQuery, final String alias) {
     SelectSqlBuilder builder = new SelectSqlBuilder(subQuery, alias);
@@ -142,19 +164,22 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 初始化构建器
+   * 初始化构建器。
    */
   private void initializeBuilder() {
     setThat(this);
   }
 
   /**
-   * 添加查询列信息，可以逐个添加，也可以添加多个，用逗号隔开，如下用法都是合法的
-   * <p>- <code>column("col1, col2, 'abc' as col3");</code>
-   * <p>- <code>column("col1").column("col2").("col3, col4");</code>
+   * 添加查询列信息，可以逐个添加，也可以添加多个，用逗号隔开。
+   * <br>用法示例：
+   * <pre>
+   * builder.column("col1, col2, 'abc' as col3");
+   * builder.column("col1").column("col2").column("col3, col4");
+   * </pre>
    *
-   * @param name
-   * @return
+   * @param name 查询列名或表达式
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder column(final String name) {
     columnsList.add(name);
@@ -162,12 +187,15 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 添加多个查询列，每个参数可以是一个col，可以是多个，如下用法都是合法的：
-   * <p>- <code>columns("col1", "col2", "'abc' as col3"); </code>
-   * <p>- <code>columns("col1, col2", "col3"); - columns("col1").clumns("col2", "col3")</code>
+   * 添加多个查询列，每个参数可以是一个列名或多个列名。
+   * <br>用法示例：
+   * <pre>
+   * builder.columns("col1", "col2", "'abc' as col3");
+   * builder.columns("col1, col2", "col3");
+   * </pre>
    *
-   * @param names
-   * @return
+   * @param names 查询列名或表达式，可变参数
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder columns(final String... names) {
     columnsList.addAll(Arrays.asList(names));
@@ -175,13 +203,15 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 添加分组表达式，如下用法都是合法的
-   * <p>- <code>groupBy("col1", "col2");</code>
-   * <p>- <code>groupBy("col1, col2");</code>
-   * <p>- <code>groupBy("col1").groupBy("col2");</code>
+   * 添加分组表达式。
+   * <br>用法示例：
+   * <pre>
+   * builder.groupBy("col1", "col2");
+   * builder.groupBy("col1, col2");
+   * </pre>
    *
-   * @param expr
-   * @return
+   * @param expr 分组字段或表达式，可变参数
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder groupBy(final String... expr) {
     groupBysList.addAll(Arrays.asList(expr));
@@ -189,13 +219,16 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 添加 ORDER BY 排序表达式，如下用法都是合法的:
-   * <p>- orderBy("col1 desc", "col2");
-   * <p>- orderBy("col1, col2");
-   * <p>- orderBy("col1").orderBy("col2 desc");
+   * 添加 ORDER BY 排序表达式。
+   * <br>用法示例：
+   * <pre>
+   * builder.orderBy("col1 desc", "col2");
+   * builder.orderBy("col1, col2");
+   * builder.orderBy("col1").orderBy("col2 desc");
+   * </pre>
    *
-   * @param expr
-   * @return
+   * @param expr 排序字段或表达式，可变参数
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder orderBy(final String... expr) {
     if (expr != null) {
@@ -205,13 +238,16 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 添加 ORDER BY 排序表达式，并指明是否 ASC 升序，如下用法都是合法的:
-   * <p>- orderBy("col1", true); 则为 ORDER BY col1 ASC
-   * <p>- orderBy("col2", false); 则为 ORDER BY col2 DESC
+   * 添加 ORDER BY 排序表达式，并指明是否 ASC 升序。
+   * <br>用法示例：
+   * <pre>
+   * builder.orderBy("col1", true); // ORDER BY col1 ASC
+   * builder.orderBy("col2", false); // ORDER BY col2 DESC
+   * </pre>
    *
-   * @param name      Name of the column by which to sort.
-   * @param ascending If true, specifies the direction "asc", otherwise, specifies
-   * <p>                 the direction "desc".
+   * @param name 排序字段名
+   * @param ascending 是否升序，true 为 ASC，false 为 DESC
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder orderBy(final String name, final boolean ascending) {
     if (ascending) {
@@ -223,12 +259,15 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * having条件表达式
-   * <p>- having("cnt > 10");
-   * <p>多个条件用 AND 连接
+   * 添加 HAVING 条件表达式。
+   * <br>用法示例：
+   * <pre>
+   * builder.having("cnt > 10");
+   * </pre>
+   * 多个条件用 AND 连接。
    *
-   * @param expr
-   * @return
+   * @param expr HAVING 条件表达式
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder having(final String expr) {
     havingsList.add(expr);
@@ -236,13 +275,16 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * having条件表达式，带参数.
-   * <p>- <code>having("cnt > ? or type = ?", n, type);</code>
-   * <p>多个条件用 AND 连接
+   * 添加 HAVING 条件表达式，带参数。
+   * <br>用法示例：
+   * <pre>
+   * builder.having("cnt > ? or type = ?", n, type);
+   * </pre>
+   * 多个条件用 AND 连接。
    *
-   * @param expr
-   * @param values
-   * @return
+   * @param expr HAVING 条件表达式
+   * @param values 条件参数，可变参数
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder having(final String expr, final Object... values) {
     having(expr);
@@ -253,10 +295,11 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 与另一个查询，做 UNION 连接
-   * <p>若使用 UNION ALL 请使用 {@link #unionAll(SelectSqlBuilder)}
-   * @param selectSql
-   * @return
+   * 与另一个查询做 UNION 连接。
+   * <br>若需 UNION ALL 请使用 {@link #unionAll(SelectSqlBuilder)}。
+   *
+   * @param selectSql 另一个 SelectSqlBuilder 实例
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder union(final SelectSqlBuilder selectSql) {
     unions.add(new JoinEntity<>("\nUNION\n", selectSql));
@@ -264,11 +307,11 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 与另一个查询，做 UNION ALL 连接
-   * <p>若使用 UNION 请使用 {@link #union(SelectSqlBuilder)}
+   * 与另一个查询做 UNION ALL 连接。
+   * <br>若需 UNION 请使用 {@link #union(SelectSqlBuilder)}。
    *
-   * @param selectSql
-   * @return
+   * @param selectSql 另一个 SelectSqlBuilder 实例
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder unionAll(final SelectSqlBuilder selectSql) {
     unions.add(new JoinEntity<>("\nUNION ALL\n", selectSql));
@@ -276,13 +319,16 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * JOIN 内连接表，表达式，如下写法都是合法的：
-   * <p>- <code>join("table2")</code>
-   * <p>- <code>join("table2 AS t2")</code>
-   * <p>- <code>join("table2 AS t2 ON t1.id = t2.classId")</code>
+   * JOIN 内连接表。
+   * <br>用法示例：
+   * <pre>
+   * builder.join("table2");
+   * builder.join("table2 AS t2");
+   * builder.join("table2 AS t2 ON t1.id = t2.classId");
+   * </pre>
    *
-   * @param joinExpr
-   * @return
+   * @param joinExpr JOIN 表达式
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder join(final String joinExpr) {
     joins.add(new JoinEntity<>("JOIN", joinExpr));
@@ -290,28 +336,32 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * JOIN 内连接表，并给表指定别名：
-   * <p>- <code>join("table2", "t2")</code>
-   * <p>生成的sql为：<code>JOIN table2 AS t2</code>
+   * JOIN 内连接表，并给表指定别名。
+   * <br>用法示例：
+   * <pre>
+   * builder.join("table2", "t2"); // JOIN table2 AS t2
+   * </pre>
    *
-   * @param table
-   * @param alias
-   * @return
+   * @param table 表名
+   * @param alias 表别名
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder join(final String table, final String alias) {
     return join(String.format(TABLE_ALIAS_FORMAT, table, alias));
   }
 
   /**
-   * JOIN 内连接表，并给表指定别名和连接条件表达式：
-   * <p>- <code>join("table2", "t2", "t1.id=t2.classId AND t2.status=2")</code>
-   * <p>生成的sql为：<code>JOIN table2 AS t2 ON  AND t2.status=2</code>
+   * JOIN 内连接表，并给表指定别名和连接条件表达式。
+   * <br>用法示例：
+   * <pre>
+   * builder.join("table2", "t2", "t1.id=t2.classId AND t2.status=2");
+   * </pre>
    *
-   * @param table
-   * @param alias
-   * @param onExpr
-   * @param values 参数
-   * @return
+   * @param table 表名
+   * @param alias 表别名
+   * @param onExpr 连接条件表达式
+   * @param values 连接参数，可变参数
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder join(final String table, final String alias, final String onExpr, final Object... values) {
     join(String.format(TABLE_ALIAS_ON_FORMAT, table, alias, onExpr));
@@ -322,13 +372,16 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * LEFT JOIN 左连接表，表达式，如下写法都是合法的：
-   * <p>- <code>leftJoin("table2")</code>
-   * <p>- <code>leftJoin("table2 AS t2")</code>
-   * <p>- <code>leftJoin("table2 AS t2 ON t1.id = t2.classId")</code>
+   * LEFT JOIN 左连接表。
+   * <br>用法示例：
+   * <pre>
+   * builder.leftJoin("table2");
+   * builder.leftJoin("table2 AS t2");
+   * builder.leftJoin("table2 AS t2 ON t1.id = t2.classId");
+   * </pre>
    *
-   * @param joinExpr
-   * @return
+   * @param joinExpr LEFT JOIN 表达式
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder leftJoin(final String joinExpr) {
     joins.add(new JoinEntity<>("LEFT JOIN", joinExpr));
@@ -336,28 +389,32 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * LEFT JOIN 左连接表，并给表指定别名：
-   * <p>- <code>leftJoin("table2", "t2")</code>
-   * <p>生成的sql为：<code>LEFT JOIN table2 AS t2</code>
+   * LEFT JOIN 左连接表，并给表指定别名。
+   * <br>用法示例：
+   * <pre>
+   * builder.leftJoin("table2", "t2"); // LEFT JOIN table2 AS t2
+   * </pre>
    *
-   * @param table
-   * @param alias
-   * @return
+   * @param table 表名
+   * @param alias 表别名
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder leftJoin(final String table, final String alias) {
     return leftJoin(String.format(TABLE_ALIAS_FORMAT, table, alias));
   }
 
   /**
-   * LEFT JOIN 左连接表，并给表指定别名和连接条件表达式：
-   * <p>- <code>leftJoin("table2", "t2", "t1.id=t2.classId AND t2.status=2")</code>
-   * <p>生成的sql为：<code>LEFT JOIN table2 AS t2 ON  AND t2.status=2</code>
+   * LEFT JOIN 左连接表，并给表指定别名和连接条件表达式。
+   * <br>用法示例：
+   * <pre>
+   * builder.leftJoin("table2", "t2", "t1.id=t2.classId AND t2.status=2");
+   * </pre>
    *
-   * @param table
-   * @param alias
-   * @param onExpr
-   * @param values 参数
-   * @return
+   * @param table 表名
+   * @param alias 表别名
+   * @param onExpr 连接条件表达式
+   * @param values 连接参数，可变参数
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder leftJoin(final String table, final String alias, final String onExpr,
       final Object... values) {
@@ -369,13 +426,16 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * RIGHT JOIN 右连接表，表达式，如下写法都是合法的：
-   * <p>- <code>rightJoin("table2")</code>
-   * <p>- <code>rightJoin("table2 AS t2")</code>
-   * <p>- <code>rightJoin("table2 AS t2 ON t1.id = t2.classId")</code>
+   * RIGHT JOIN 右连接表。
+   * <br>用法示例：
+   * <pre>
+   * builder.rightJoin("table2");
+   * builder.rightJoin("table2 AS t2");
+   * builder.rightJoin("table2 AS t2 ON t1.id = t2.classId");
+   * </pre>
    *
-   * @param joinExpr
-   * @return
+   * @param joinExpr RIGHT JOIN 表达式
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder rightJoin(final String joinExpr) {
     joins.add(new JoinEntity<>("RIGHT JOIN", joinExpr));
@@ -383,28 +443,32 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * RIGHT JOIN 左连接表，并给表指定别名：
-   * <p>- <code>rightJoin("table2", "t2")</code>
-   * <p>生成的sql为：<code>RIGHT JOIN table2 AS t2</code>
+   * RIGHT JOIN 右连接表，并给表指定别名。
+   * <br>用法示例：
+   * <pre>
+   * builder.rightJoin("table2", "t2"); // RIGHT JOIN table2 AS t2
+   * </pre>
    *
-   * @param table
-   * @param alias
-   * @return
+   * @param table 表名
+   * @param alias 表别名
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder rightJoin(final String table, final String alias) {
     return rightJoin(String.format(TABLE_ALIAS_FORMAT, table, alias));
   }
 
   /**
-   * RIGHT JOIN 右连接表，并给表指定别名和连接条件表达式：
-   * <p>- <code>rightJoin("table2", "t2", "t1.id=t2.classId AND t2.status=2")</code>
-   * <p>生成的sql为：<code>RIGHT JOIN table2 AS t2 ON  AND t2.status=2</code>
+   * RIGHT JOIN 右连接表，并给表指定别名和连接条件表达式。
+   * <br>用法示例：
+   * <pre>
+   * builder.rightJoin("table2", "t2", "t1.id=t2.classId AND t2.status=2");
+   * </pre>
    *
-   * @param table
-   * @param alias
-   * @param onExpr
-   * @param values 参数
-   * @return
+   * @param table 表名
+   * @param alias 表别名
+   * @param onExpr 连接条件表达式
+   * @param values 连接参数，可变参数
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder rightJoin(final String table, final String alias, final String onExpr,
       final Object... values) {
@@ -416,15 +480,15 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * CROSS JOIN 交叉连接,cross join不可以加on
-   * <p>- <code>crossJoin("table2")</code>
-   * <p>生成的sql为：<code>CROSS JOIN table2</code>
-   * OR
-   * <p>- <code>crossJoin("jsonb_array_elements(knowledge)")</code>
-   * <p>生成的sql为：<code>CROSS JOIN jsonb_array_elements(knowledge)</code>
+   * CROSS JOIN 交叉连接，cross join 不可以加 on。
+   * <br>用法示例：
+   * <pre>
+   * builder.crossJoin("table2"); // CROSS JOIN table2
+   * builder.crossJoin("jsonb_array_elements(knowledge)"); // CROSS JOIN jsonb_array_elements(knowledge)
+   * </pre>
    *
-   * @param joinExpr
-   * @return
+   * @param joinExpr CROSS JOIN 表达式
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder crossJoin(final String joinExpr) {
     joins.add(new JoinEntity<>("CROSS JOIN", joinExpr));
@@ -432,25 +496,25 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * CROSS JOIN 交叉连接,cross join不可以加on
-   * <p>- <code>crossJoin("table2", "t2")</code>
-   * <p>生成的sql为：<code>CROSS JOIN table2 AS t2</code>
-   * OR
-   * <p>- <code>crossJoin("jsonb_array_elements(knowledge)", "value")</code>
-   * <p>生成的sql为：<code>CROSS JOIN jsonb_array_elements(knowledge) AS value</code>
+   * CROSS JOIN 交叉连接，cross join 不可以加 on。
+   * <br>用法示例：
+   * <pre>
+   * builder.crossJoin("table2", "t2"); // CROSS JOIN table2 AS t2
+   * builder.crossJoin("jsonb_array_elements(knowledge)", "value"); // CROSS JOIN jsonb_array_elements(knowledge) AS value
+   * </pre>
    *
-   * @param joinExpr
-   * @param alias
-   * @return
+   * @param joinExpr CROSS JOIN 表达式
+   * @param alias 别名
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder crossJoin(final String joinExpr, final String alias) {
     return crossJoin(String.format(TABLE_ALIAS_FORMAT, joinExpr, alias));
   }
 
   /**
-   * 声明为distinct查询
+   * 声明为 DISTINCT 查询。
    *
-   * @return
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder distinct() {
     this.distinctFlag = true;
@@ -458,23 +522,24 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 使用 LIMIT 限制查询条数，生成的SQL语句如下：
-   * <p><code>LIMIT [limit]</code>
-   * @param limit
-   * @return
+   * 使用 LIMIT 限制查询条数。
+   * <br>生成的 SQL 语句如：LIMIT [limit]
+   *
+   * @param limit 限制条数
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder limit(final int limit) {
     return this.limit(limit, 0);
   }
 
   /**
-   * 使用 LIMIT 限制查询条数，生成的SQL语句如下：
-   * <p><code>LIMIT [offset], [limit]</code>
-   * <p>使用 OFFSET 关键字，请用 {@link #limitOffset(int, long)}
+   * 使用 LIMIT 限制查询条数。
+   * <br>生成的 SQL 语句如：LIMIT [offset], [limit]
+   * <br>如需使用 OFFSET 关键字，请调用 limitOffset(int, long) 方法。
    *
-   * @param limit
-   * @param offset
-   * @return
+   * @param limit 限制条数
+   * @param offset 偏移量
+   * @return 当前 SelectSqlBuilder 实例，便于链式调用
    */
   public SelectSqlBuilder limit(final int limit, final long offset) {
     this.limitValue = limit;
@@ -536,13 +601,19 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 获取用于计数的SQL语句
-   * @return 计数SQL语句字符串
+   * 获取用于计数的 SQL 语句。
+   *
+   * @return 计数 SQL 语句字符串
    */
   public String getCountSql() {
     return getSql(true);
   }
 
+  /**
+   * 获取 SQL 语句的所有参数数组。
+   *
+   * @return 参数数组，按 SQL 占位符顺序排列
+   */
   @Override
   public Object[] getParams() {
     Stream<Object[]> paramsArr = Stream.of(
@@ -556,15 +627,17 @@ public final class SelectSqlBuilder extends WhereSql<SelectSqlBuilder> implement
   }
 
   /**
-   * 连接实体类，用于表示SQL连接操作
+   * 连接实体类，用于表示 SQL 连接操作。
    */
   private static class JoinEntity<V> {
     private final String op;
     private final V expr;
 
     /**
-     * @param op
-     * @param expr
+     * 构造 JoinEntity 实例。
+     *
+     * @param op 连接操作类型（如 JOIN、LEFT JOIN）
+     * @param expr 连接表达式
      */
     public JoinEntity(final String op, final V expr) {
       this.op = op;

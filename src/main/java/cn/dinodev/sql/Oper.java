@@ -6,9 +6,12 @@ package cn.dinodev.sql;
 import cn.dinodev.sql.utils.NamingUtils;
 
 /**
+ * SQL 操作符枚举类型。
+ * <p>
+ * 用于表示 SQL 查询中的各种操作符，如 =、>、IN、LIKE 等。
  *
  * @author Cody Lu
- * @date 2022-03-07 19:13:14
+ * @since 2022-03-07
  */
 
 public enum Oper {
@@ -75,8 +78,10 @@ public enum Oper {
   private final int valueCount;
 
   /**
+   * 构造方法。
    *
-   * @param op the oprator
+   * @param op 操作符字符串（如 =、>、IN 等）
+   * @param expr SQL 表达式模板
    */
   Oper(String op, String expr) {
     this.op = op;
@@ -86,17 +91,17 @@ public enum Oper {
   }
 
   /**
-   * 返回操作符
-   * @return
+   * 获取操作符字符串。
+   * @return 操作符（如 =、>、IN 等）
    */
   public String getOp() {
     return op;
   }
 
   /**
-   * 生成相应的表达式
-   * @param params
-   * @return
+   * 根据参数生成 SQL 表达式。
+   * @param params 表达式参数
+   * @return 格式化后的 SQL 表达式
    */
   public String makeExpr(final String... params) {
     if (params.length != this.paramCount) {
@@ -106,8 +111,8 @@ public enum Oper {
   }
 
   /**
-   * 检查操作符是否包含值占位符
-   * @return 如果包含值占位符返回true
+   * 检查操作符是否包含值占位符。
+   * @return 如果包含值占位符返回 true，否则返回 false
    */
   public boolean hasValue() {
     return valueCount > 0;

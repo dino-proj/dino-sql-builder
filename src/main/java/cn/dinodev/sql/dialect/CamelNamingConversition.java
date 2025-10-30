@@ -9,17 +9,32 @@ import java.util.WeakHashMap;
 import cn.dinodev.sql.utils.NamingUtils;
 
 /**
- * 驼峰命名转换器
- * 将数据库字段名转换为Java驼峰命名格式，例如user_name -> userName
+ * 驼峰命名转换器。
+ * <p>
+ * 用于将数据库字段名转换为 Java 驼峰命名格式，例如 user_name -&gt; userName。
  *
  * @author Cody Lu
- * @date 2022-03-07 19:16:02
+ * @since 2022-03-07
  */
 
 public class CamelNamingConversition implements NamingConversition {
 
+
   private static final Map<String, String> NAMING_CACHE = new WeakHashMap<>(1000);
 
+  /**
+   * 默认构造函数。
+   * 用于创建 CamelNamingConversition 实例。
+   */
+  public CamelNamingConversition() {
+  }
+
+  /**
+   * 将字段名转换为驼峰命名。
+   *
+   * @param colName 数据库字段名（蛇形风格）
+   * @return Java 字段名（驼峰风格）
+   */
   @Override
   public String convertColumnName(String colName) {
     var val = NAMING_CACHE.get(colName);
@@ -30,6 +45,12 @@ public class CamelNamingConversition implements NamingConversition {
     return val;
   }
 
+  /**
+   * 将表名转换为驼峰命名。
+   *
+   * @param tableName 数据库表名（蛇形风格）
+   * @return Java 表名（驼峰风格）
+   */
   @Override
   public String convertTableName(String tableName) {
     return convertColumnName(tableName);

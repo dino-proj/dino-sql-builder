@@ -11,9 +11,12 @@ import java.util.Locale;
 import cn.dinodev.sql.utils.NamingUtils;
 
 /**
+ * 数据库方言接口。
+ * <p>
+ * 用于适配不同数据库的 SQL 生成与命名转换逻辑。
  *
  * @author Cody Lu
- * @date 2022-03-07 19:14:24
+ * @since 2022-03-07
  */
 
 public interface Dialect {
@@ -125,7 +128,15 @@ public interface Dialect {
    * 默认数据库方言实现
    */
   class Default implements Dialect {
-    private static final Default INST_DEFAULT = new Default();
+
+  private static final Default INST_DEFAULT = new Default();
+
+  /**
+   * 默认构造函数。
+   * 创建默认数据库方言实现实例。
+   */
+  public Default() {
+  }
 
     /**
      * 生成 LIMIT/OFFSET 语句

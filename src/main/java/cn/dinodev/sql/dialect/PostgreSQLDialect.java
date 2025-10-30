@@ -9,10 +9,12 @@ import java.sql.SQLException;
 import cn.dinodev.sql.utils.NamingUtils;
 
 /**
- * PostgreSQL 数据库方言实现
+ * PostgreSQL 数据库方言实现。
+ * <p>
+ * 提供 PostgreSQL 专用的 SQL 生成与命名转换逻辑。
  *
  * @author Cody Lu
- * @date 2022-03-07 19:15:17
+ * @since 2022-03-07
  */
 
 public class PostgreSQLDialect implements Dialect {
