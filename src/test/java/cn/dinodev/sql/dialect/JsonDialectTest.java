@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import cn.dinodev.sql.JsonPath;
 import cn.dinodev.sql.JsonType;
 import cn.dinodev.sql.naming.SnakeNamingConversition;
 import cn.dinodev.sql.testutil.DatabaseMetaDataMocks;
@@ -77,9 +78,10 @@ public class JsonDialectTest {
   @Test
   @DisplayName("PostgreSQL - makeJsonSetPath 对 JSON 类型应该抛出异常")
   void testPostgresJsonSetPathWithJsonType() {
+    JsonPath path = JsonPath.of("address", "city");
     UnsupportedOperationException exception = assertThrows(
         UnsupportedOperationException.class,
-        () -> postgresDialect.makeJsonSetPath(JsonType.JSON, "data", "{address,city}", true));
+        () -> postgresDialect.makeJsonSetPath(JsonType.JSON, "data", path, true));
 
     assertEquals("PostgreSQL JSON type does not support path operations, use JSONB instead",
         exception.getMessage());
@@ -88,8 +90,29 @@ public class JsonDialectTest {
   @Test
   @DisplayName("PostgreSQL - makeJsonSetPath 对 JSONB 类型应该返回正确的路径设置表达式")
   void testPostgresJsonSetPathWithJsonbType() {
-    String result = postgresDialect.makeJsonSetPath(JsonType.JSONB, "data", "{address,city}", true);
+    JsonPath path = JsonPath.of("address", "city");
+    String result = postgresDialect.makeJsonSetPath(JsonType.JSONB, "data", path, true);
     assertEquals("jsonb_set(data, '{address,city}', ?::jsonb, true)", result);
+  }
+
+  @Test
+  @DisplayName("PostgreSQL - makeJsonRemovePath 对 JSON 类型应该抛出异常")
+  void testPostgresJsonRemovePathWithJsonType() {
+    JsonPath path = JsonPath.of("address");
+    UnsupportedOperationException exception = assertThrows(
+        UnsupportedOperationException.class,
+        () -> postgresDialect.makeJsonRemovePath(JsonType.JSON, "data", path));
+
+    assertEquals("PostgreSQL JSON type does not support path operations, use JSONB instead",
+        exception.getMessage());
+  }
+
+  @Test
+  @DisplayName("PostgreSQL - makeJsonRemovePath 对 JSONB 类型应该返回正确的路径删除表达式")
+  void testPostgresJsonRemovePathWithJsonbType() {
+    JsonPath path = JsonPath.of("address", "city");
+    String result = postgresDialect.makeJsonRemovePath(JsonType.JSONB, "data", path);
+    assertEquals("data #- '{address,city}'", result);
   }
 
   @Test
@@ -163,13 +186,27 @@ public class JsonDialectTest {
   @Test
   @DisplayName("MySQL - makeJsonSetPath 对任何类型都应该返回 JSON_SET")
   void testMysqlJsonSetPath() {
-    // MySQL 忽略 JsonType 参数，统一使用 JSON_SET
-    // MySQL 使用自己的路径格式，不转换 PostgreSQL 格式
-    String resultJson = mysqlDialect.makeJsonSetPath(JsonType.JSON, "data", "{address,city}", true);
-    String resultJsonb = mysqlDialect.makeJsonSetPath(JsonType.JSONB, "data", "{address,city}", true);
+    JsonPath path = JsonPath.of("address", "city");
 
-    assertEquals("JSON_SET(data, '{address,city}', ?)", resultJson);
-    assertEquals("JSON_SET(data, '{address,city}', ?)", resultJsonb);
+    // MySQL 忽略 JsonType 参数，统一使用 JSON_SET
+    String resultJson = mysqlDialect.makeJsonSetPath(JsonType.JSON, "data", path, true);
+    String resultJsonb = mysqlDialect.makeJsonSetPath(JsonType.JSONB, "data", path, true);
+
+    assertEquals("JSON_SET(data, '$.address.city', ?)", resultJson);
+    assertEquals("JSON_SET(data, '$.address.city', ?)", resultJsonb);
+  }
+
+  @Test
+  @DisplayName("MySQL - makeJsonRemovePath 对任何类型都应该返回 JSON_REMOVE")
+  void testMysqlJsonRemovePath() {
+    JsonPath path = JsonPath.of("address", "city");
+
+    // MySQL 忽略 JsonType 参数，统一使用 JSON_REMOVE
+    String resultJson = mysqlDialect.makeJsonRemovePath(JsonType.JSON, "data", path);
+    String resultJsonb = mysqlDialect.makeJsonRemovePath(JsonType.JSONB, "data", path);
+
+    assertEquals("JSON_REMOVE(data, '$.address.city')", resultJson);
+    assertEquals("JSON_REMOVE(data, '$.address.city')", resultJsonb);
   }
 
   @Test
@@ -215,23 +252,30 @@ public class JsonDialectTest {
   // ==================== API 一致性测试 ====================
 
   @Test
-  @DisplayName("所有方法都应该要求 JsonType 参数")
+  @DisplayName("所有方法都应该要求 JsonType 参数和 JsonPath")
   void testApiConsistency() {
     // 这个测试确保新 API 的一致性：所有方法都需要 JsonType 参数
+    // makeJsonSetPath 和 makeJsonRemovePath 使用 JsonPath 代替 String
     // 如果编译通过，说明 API 设计一致
 
+    JsonPath path = JsonPath.of("test", "path");
+
     // PostgreSQL
+    postgresDialect.formatPath(path);
     postgresDialect.makeTypeCast(JsonType.JSONB);
     postgresDialect.makeJsonMerge(JsonType.JSONB, "col");
-    postgresDialect.makeJsonSetPath(JsonType.JSONB, "col", "path", true);
+    postgresDialect.makeJsonSetPath(JsonType.JSONB, "col", path, true);
+    postgresDialect.makeJsonRemovePath(JsonType.JSONB, "col", path);
     postgresDialect.makeJsonArrayAppend(JsonType.JSONB, "col");
     postgresDialect.makeJsonArrayPrepend(JsonType.JSONB, "col");
     postgresDialect.makeJsonStripNulls(JsonType.JSONB, "col");
 
     // MySQL
+    mysqlDialect.formatPath(path);
     mysqlDialect.makeTypeCast(JsonType.JSON);
     mysqlDialect.makeJsonMerge(JsonType.JSON, "col");
-    mysqlDialect.makeJsonSetPath(JsonType.JSON, "col", "path", true);
+    mysqlDialect.makeJsonSetPath(JsonType.JSON, "col", path, true);
+    mysqlDialect.makeJsonRemovePath(JsonType.JSON, "col", path);
     mysqlDialect.makeJsonArrayAppend(JsonType.JSON, "col");
     mysqlDialect.makeJsonArrayPrepend(JsonType.JSON, "col");
     // MySQL 的 stripNulls 会抛出异常，但 API 签名是一致的
