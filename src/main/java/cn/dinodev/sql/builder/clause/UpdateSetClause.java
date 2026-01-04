@@ -6,6 +6,7 @@ package cn.dinodev.sql.builder.clause;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import cn.dinodev.sql.SqlBuilder;
 
@@ -395,26 +396,29 @@ public interface UpdateSetClause<T extends SqlBuilder> extends ClauseSupport<T> 
   // ==================== JSON/JSONB 操作 ====================
 
   /**
-   * 开始 JSONB 链式操作（PostgreSQL）。
+   * 使用回调方式执行 JSONB 链式操作（PostgreSQL）。
    * <p>
-   * 用于构建复杂的 JSONB 操作表达式，支持链式调用多个操作。
+   * 此方法接受一个 Consumer 回调，在回调执行完毕后自动应用操作，无需显式调用 apply()。
+   * 这是最推荐的使用方式，代码更简洁。
    * <p>
    * 使用示例：
    * <pre>{@code
-   * builder.jsonb("settings")
+   * builder.jsonb("settings", ops -> ops
    *     .merge("{\"theme\":\"dark\"}")
    *     .setPath("{notifications,email}", true)
    *     .removeKey("deprecated")
    *     .stripNulls()
-   *     .apply();
+   * ); // 自动应用，无需调用 apply()
    * }</pre>
    * 
    * @param column 要操作的列名
-   * @return JSONB 操作构建器
+   * @param operations JSONB 操作回调函数
+   * @return 构建器本身
    * @see JsonbOperations
+   * @see #jsonb(String)
    */
-  default JsonbOperations<T> jsonb(String column) {
-    return new JsonbOperations<T>(self(),
+  default T jsonb(String column, Consumer<JsonbOperations<T>> operations) {
+    JsonbOperations<T> ops = new JsonbOperations<T>(
         (expr, params) -> {
           if (params == null || params.isEmpty()) {
             set(column + " = " + expr);
@@ -422,6 +426,24 @@ public interface UpdateSetClause<T extends SqlBuilder> extends ClauseSupport<T> 
             set(column + " = " + expr, params);
           }
         }, column);
+    operations.accept(ops);
+    ops.close(); // 自动应用
+    return self();
+  }
+
+  /**
+   * 条件执行 JSONB 链式操作。
+   * 
+   * @param condition 条件
+   * @param column 要操作的列名
+   * @param operations JSONB 操作回调函数
+   * @return 构建器本身
+   */
+  default T jsonbIf(boolean condition, String column, Consumer<JsonbOperations<T>> operations) {
+    if (condition) {
+      return jsonb(column, operations);
+    }
+    return self();
   }
 
   /**

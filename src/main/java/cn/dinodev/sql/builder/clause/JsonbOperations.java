@@ -17,24 +17,31 @@ import java.util.function.BiConsumer;
  * <p>
  * 使用示例：
  * <pre>{@code
- * builder.jsonb("settings")
+ * // 方式2: 使用 try-with-resources 自动应用
+ * try (var ops = builder.jsonb("settings")) {
+ *     ops.merge("{\"theme\":\"dark\"}")
+ *        .setPath("{notifications,email}", true)
+ *        .removeKey("deprecated");
+ * } // 自动应用
+ * 
+ * // 方式3: 使用回调自动应用（推荐）
+ * builder.jsonb("settings", ops -> ops
  *     .merge("{\"theme\":\"dark\"}")
  *     .setPath("{notifications,email}", true)
  *     .removeKey("deprecated")
- *     .stripNulls()
- *     .apply();
+ * ); // 自动应用
  * }</pre>
  * 
  * @param <T> 具体的 SQL 构建器类型
  * @author Cody Lu
  * @since 2026-01-03
  */
-public class JsonbOperations<T> {
+public class JsonbOperations<T> implements AutoCloseable {
 
   private final String column;
   private final List<JsonbOperation> operations = new ArrayList<>();
   private final BiConsumer<String, Collection<Object>> applier;
-  private final T that;
+  private boolean applied = false;
 
   /**
    * 构造 JSONB 操作构建器。
@@ -43,8 +50,7 @@ public class JsonbOperations<T> {
    * @param applier 用于应用 JSONB 表达式和参数的回调函数
    * @param column 要操作的列名
    */
-  public JsonbOperations(T that, BiConsumer<String, Collection<Object>> applier, String column) {
-    this.that = that;
+  public JsonbOperations(BiConsumer<String, Collection<Object>> applier, String column) {
     this.applier = applier;
     this.column = column;
   }
@@ -56,6 +62,9 @@ public class JsonbOperations<T> {
    * @return 当前构建器
    */
   public JsonbOperations<T> set(Object value) {
+    // 断言 applied 为 false
+    assert !applied : "JSONB 操作已应用，无法继续添加操作";
+
     operations.add(new SetOperation(value));
     return this;
   }
@@ -69,6 +78,8 @@ public class JsonbOperations<T> {
    * @return 当前构建器
    */
   public JsonbOperations<T> merge(Object value) {
+    assert !applied : "JSONB 操作已应用，无法继续添加操作";
+
     operations.add(new MergeOperation(value));
     return this;
   }
@@ -83,6 +94,8 @@ public class JsonbOperations<T> {
    * @return 当前构建器
    */
   public JsonbOperations<T> setPath(String path, Object value) {
+    assert !applied : "JSONB 操作已应用，无法继续添加操作";
+
     operations.add(new SetPathOperation(path, value, true));
     return this;
   }
@@ -96,6 +109,8 @@ public class JsonbOperations<T> {
    * @return 当前构建器
    */
   public JsonbOperations<T> setPath(String path, Object value, boolean createMissing) {
+    assert !applied : "JSONB 操作已应用，无法继续添加操作";
+
     operations.add(new SetPathOperation(path, value, createMissing));
     return this;
   }
@@ -109,6 +124,8 @@ public class JsonbOperations<T> {
    * @return 当前构建器
    */
   public JsonbOperations<T> removeKey(String key) {
+    assert !applied : "JSONB 操作已应用，无法继续添加操作";
+
     operations.add(new RemoveKeyOperation(key));
     return this;
   }
@@ -120,6 +137,8 @@ public class JsonbOperations<T> {
    * @return 当前构建器
    */
   public JsonbOperations<T> removeKeys(String... keys) {
+    assert !applied : "JSONB 操作已应用，无法继续添加操作";
+
     operations.add(new RemoveKeysOperation(keys));
     return this;
   }
@@ -133,6 +152,8 @@ public class JsonbOperations<T> {
    * @return 当前构建器
    */
   public JsonbOperations<T> removePath(String path) {
+    assert !applied : "JSONB 操作已应用，无法继续添加操作";
+
     operations.add(new RemovePathOperation(path));
     return this;
   }
@@ -146,6 +167,8 @@ public class JsonbOperations<T> {
    * @return 当前构建器
    */
   public JsonbOperations<T> appendArray(Object value) {
+    assert !applied : "JSONB 操作已应用，无法继续添加操作";
+
     operations.add(new AppendArrayOperation(value));
     return this;
   }
@@ -157,6 +180,8 @@ public class JsonbOperations<T> {
    * @return 当前构建器
    */
   public JsonbOperations<T> prependArray(Object value) {
+    assert !applied : "JSONB 操作已应用，无法继续添加操作";
+
     operations.add(new PrependArrayOperation(value));
     return this;
   }
@@ -169,6 +194,8 @@ public class JsonbOperations<T> {
    * @return 当前构建器
    */
   public JsonbOperations<T> setArrayElement(int index, Object value) {
+    assert !applied : "JSONB 操作已应用，无法继续添加操作";
+
     operations.add(new SetPathOperation("{" + index + "}", value, true));
     return this;
   }
@@ -180,6 +207,8 @@ public class JsonbOperations<T> {
    * @return 当前构建器
    */
   public JsonbOperations<T> removeArrayElement(int index) {
+    assert !applied : "JSONB 操作已应用，无法继续添加操作";
+
     operations.add(new RemovePathOperation("{" + index + "}"));
     return this;
   }
@@ -192,20 +221,26 @@ public class JsonbOperations<T> {
    * @return 当前构建器
    */
   public JsonbOperations<T> stripNulls() {
+    assert !applied : "JSONB 操作已应用，无法继续添加操作";
+
     operations.add(new StripNullsOperation());
     return this;
   }
 
   /**
-   * 应用所有操作并返回 SQL 构建器。
+   * 自动应用所有操作(AutoCloseable 接口实现)。
    * <p>
-   * 将所有累积的操作组合成一个 SQL 表达式并设置到列上。
-   * 
-   * @return SQL 构建器
+   * 用于 try-with-resources 语句自动应用操作:
+   * <pre>{@code
+   * try (var ops = builder.jsonb("settings")) {
+   *     ops.merge("{\"theme\":\"dark\"}").removeKey("old");
+   * } // 自动调用 close() 应用操作
+   * }</pre>
    */
-  public T apply() {
-    if (operations.isEmpty()) {
-      return that;
+  @Override
+  public void close() {
+    if (applied || operations.isEmpty()) {
+      return;
     }
 
     // 构建完整的 SQL 表达式
@@ -223,17 +258,8 @@ public class JsonbOperations<T> {
     } else {
       applier.accept(expr.toString(), params);
     }
-    return that;
-  }
 
-  /**
-   * 条件应用所有操作。
-   * 
-   * @param condition 条件
-   * @return SQL 构建器
-   */
-  public T applyIf(boolean condition) {
-    return condition ? apply() : that;
+    applied = true;
   }
 
   // ==================== 内部操作接口和实现 ====================
