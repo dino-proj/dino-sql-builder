@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import cn.dinodev.sql.JsonPath;
 import cn.dinodev.sql.dialect.Dialect;
 import cn.dinodev.sql.dialect.MysqlDialect;
 import cn.dinodev.sql.dialect.PostgreSQLDialect;
@@ -46,7 +47,7 @@ class JsonOperationsTest {
 
     builder.jsonb("settings", ops -> ops
         .merge("{\"theme\":\"dark\"}")
-        .setPath("{notifications,email}", true)
+        .setPath(JsonPath.of("notifications", "email"), true)
         .removeKey("deprecated"))
         .where("id", 1);
 
@@ -86,7 +87,7 @@ class JsonOperationsTest {
     UpdateSqlBuilder builder = UpdateSqlBuilder.create(postgresDialect, "users");
 
     builder.jsonb("settings", ops -> ops
-        .setPath("{notifications,email}", true))
+        .setPath(JsonPath.of("notifications", "email"), true))
         .where("id", 1);
 
     System.out.println("PostgreSQL SQL: " + builder.getSql());
@@ -116,7 +117,7 @@ class JsonOperationsTest {
 
     UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
       builder.json("settings", ops -> ops
-          .setPath("{notifications,email}", true))
+          .setPath(JsonPath.of("notifications", "email"), true))
           .where("id", 1);
       builder.getSql(); // 触发操作执行
     });
@@ -159,7 +160,7 @@ class JsonOperationsTest {
     UpdateSqlBuilder builder = UpdateSqlBuilder.create(mysqlDialect, "users");
 
     builder.json("settings", ops -> ops
-        .setPath("{notifications,email}", true))
+        .setPath(JsonPath.of("notifications", "email"), true))
         .where("id", 1);
 
     System.out.println("MySQL SQL: " + builder.getSql());
