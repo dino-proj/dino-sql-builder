@@ -578,4 +578,69 @@ class PostgreSQLDialectTest {
     assertTrue(dialect.supportSequence(), "应该支持 Sequence");
     assertTrue(dialect.supportUUID(), "应该支持 UUID");
   }
+
+  // ==================== 字符串拼接操作测试 ====================
+
+  @Test
+  @DisplayName("测试字符串追加拼接表达式")
+  void testMakeStringConcat() throws Exception {
+    DatabaseMetaData metadata = DatabaseMetaDataMocks.createPostgreSQL(15);
+    PostgreSQLDialect dialect = new PostgreSQLDialect(metadata, snakeNaming);
+
+    String result = dialect.makeStringConcat("user_name");
+    assertEquals("user_name || ?", result,
+        "PostgreSQL 应该使用 || 运算符进行字符串拼接");
+  }
+
+  @Test
+  @DisplayName("测试字符串前置拼接表达式")
+  void testMakeStringPrepend() throws Exception {
+    DatabaseMetaData metadata = DatabaseMetaDataMocks.createPostgreSQL(15);
+    PostgreSQLDialect dialect = new PostgreSQLDialect(metadata, snakeNaming);
+
+    String result = dialect.makeStringPrepend("title");
+    assertEquals("? || title", result,
+        "PostgreSQL 应该使用 || 运算符进行字符串前置拼接");
+  }
+
+  @Test
+  @DisplayName("测试带表别名的字符串拼接")
+  void testMakeStringConcatWithTableAlias() throws Exception {
+    DatabaseMetaData metadata = DatabaseMetaDataMocks.createPostgreSQL(15);
+    PostgreSQLDialect dialect = new PostgreSQLDialect(metadata, snakeNaming);
+
+    String result = dialect.makeStringConcat("u.full_name");
+    assertEquals("u.full_name || ?", result,
+        "PostgreSQL 应该正确处理带表别名的列名");
+  }
+
+  @Test
+  @DisplayName("测试带双引号的列名字符串拼接")
+  void testMakeStringConcatWithQuotedColumn() throws Exception {
+    DatabaseMetaData metadata = DatabaseMetaDataMocks.createPostgreSQL(15);
+    PostgreSQLDialect dialect = new PostgreSQLDialect(metadata, snakeNaming);
+
+    String result = dialect.makeStringConcat("\"Order\"");
+    assertEquals("\"Order\" || ?", result,
+        "PostgreSQL 应该正确处理带双引号的列名");
+  }
+
+  @Test
+  @DisplayName("测试不同版本的字符串拼接一致性")
+  void testStringConcatConsistencyAcrossVersions() throws Exception {
+    // PostgreSQL 12
+    PostgreSQLDialect dialect12 = new PostgreSQLDialect(DatabaseMetaDataMocks.createPostgreSQL(12), snakeNaming);
+    assertEquals("name || ?", dialect12.makeStringConcat("name"));
+    assertEquals("? || name", dialect12.makeStringPrepend("name"));
+
+    // PostgreSQL 15
+    PostgreSQLDialect dialect15 = new PostgreSQLDialect(DatabaseMetaDataMocks.createPostgreSQL(15), snakeNaming);
+    assertEquals("name || ?", dialect15.makeStringConcat("name"));
+    assertEquals("? || name", dialect15.makeStringPrepend("name"));
+
+    // PostgreSQL 17
+    PostgreSQLDialect dialect17 = new PostgreSQLDialect(DatabaseMetaDataMocks.postgresV17, snakeNaming);
+    assertEquals("name || ?", dialect17.makeStringConcat("name"));
+    assertEquals("? || name", dialect17.makeStringPrepend("name"));
+  }
 }

@@ -570,60 +570,43 @@ public interface UpdateSetClause<T extends SqlBuilder> extends ClauseSupport<T> 
     return self();
   }
 
+  // ==================== 字符串操作 ====================
+
   /**
-   * 字符串拼接（使用 CONCAT 函数）。
+   * 字符串拼接。
+   * <p>
+   * 根据数据库类型自动选择拼接方式：
+   * <ul>
+   *   <li>MySQL: CONCAT(column, ?)</li>
+   *   <li>PostgreSQL: column || ?</li>
+   * </ul>
    * 
    * @param column 列名
-   * @param value 要拼接的值
+   * @param value 要拼接的字符串值
    * @return 构建器本身
    */
-  default T concat(String column, Object value) {
-    return set(column, "CONCAT(" + column + ", ?)", value);
+  default T stringConcat(String column, CharSequence value) {
+    return set(column, dialect().makeStringConcat(column), value);
   }
 
   /**
-   * 在字符串末尾追加内容（使用 || 运算符，PostgreSQL）。
+   * 字符串前置拼接。
+   * <p>
+   * 在字符串开头添加内容，根据数据库类型自动选择拼接方式：
+   * <ul>
+   *   <li>MySQL: CONCAT(?, column)</li>
+   *   <li>PostgreSQL: ? || column</li>
+   * </ul>
    * 
    * @param column 列名
-   * @param value 要追加的值
+   * @param value 要前置的字符串值
    * @return 构建器本身
    */
-  default T append(String column, Object value) {
-    return set(column, column + " || ?", value);
+  default T stringPrepend(String column, CharSequence value) {
+    return set(column, dialect().makeStringPrepend(column), value);
   }
 
-  /**
-   * 在字符串开头添加内容（使用 || 运算符，PostgreSQL）。
-   * 
-   * @param column 列名
-   * @param value 要添加的值
-   * @return 构建器本身
-   */
-  default T prepend(String column, Object value) {
-    return set(column, "? || " + column, value);
-  }
-
-  /**
-   * 数组追加元素（PostgreSQL array_append 函数）。
-   * 
-   * @param column 列名
-   * @param value 要追加的元素
-   * @return 构建器本身
-   */
-  default T arrayAppend(String column, Object value) {
-    return set(column, "array_append(" + column + ", ?)", value);
-  }
-
-  /**
-   * 数组移除元素（PostgreSQL array_remove 函数）。
-   * 
-   * @param column 列名
-   * @param value 要移除的元素
-   * @return 构建器本身
-   */
-  default T arrayRemove(String column, Object value) {
-    return set(column, "array_remove(" + column + ", ?)", value);
-  }
+  // ==================== 子查询操作 ====================
 
   /**
    * 使用子查询设置列值。
@@ -655,17 +638,6 @@ public interface UpdateSetClause<T extends SqlBuilder> extends ClauseSupport<T> 
       return setSubQuery(column, subQuery);
     }
     return self();
-  }
-
-  /**
-   * 设置为 COALESCE 表达式（取第一个非 NULL 值）。
-   * 
-   * @param column 列名
-   * @param defaultValue 默认值
-   * @return 构建器本身
-   */
-  default T setCoalesce(String column, Object defaultValue) {
-    return set(column, "COALESCE(" + column + ", ?)", defaultValue);
   }
 
   /**

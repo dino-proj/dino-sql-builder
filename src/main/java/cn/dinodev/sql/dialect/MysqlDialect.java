@@ -156,6 +156,34 @@ public class MysqlDialect implements Dialect {
   }
 
   /**
+   * 生成字符串拼接表达式。
+   * <p>
+   * MySQL 使用 CONCAT 函数。
+   * 
+   * @param column 列名
+   * @return CONCAT(column, ?)
+   * @since 2026-01-04
+   */
+  @Override
+  public String makeStringConcat(String column) {
+    return "CONCAT(" + column + ", ?)";
+  }
+
+  /**
+   * 生成字符串前置拼接表达式。
+   * <p>
+   * MySQL 使用 CONCAT 函数。
+   * 
+   * @param column 列名
+   * @return CONCAT(?, column)
+   * @since 2026-01-04
+   */
+  @Override
+  public String makeStringPrepend(String column) {
+    return "CONCAT(?, " + column + ")";
+  }
+
+  /**
    * 返回 JSON 操作方言实例。
    * <p>
    * 返回 MySQL 专用的 JsonDialect 实现。

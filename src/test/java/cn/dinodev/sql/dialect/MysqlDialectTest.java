@@ -348,4 +348,50 @@ class MysqlDialectTest {
     assertFalse(dialect.isCompatible(metadata),
         "未知数据库不应该与 MySQL 方言兼容");
   }
+
+  // ==================== 字符串拼接操作测试 ====================
+
+  @Test
+  @DisplayName("测试字符串追加拼接表达式")
+  void testMakeStringConcat() {
+    DatabaseMetaData metadata = DatabaseMetaDataMocks.createMySQL(8);
+    MysqlDialect dialect = new MysqlDialect(metadata, snakeNaming);
+
+    String result = dialect.makeStringConcat("user_name");
+    assertEquals("CONCAT(user_name, ?)", result,
+        "MySQL 应该使用 CONCAT 函数进行字符串拼接");
+  }
+
+  @Test
+  @DisplayName("测试字符串前置拼接表达式")
+  void testMakeStringPrepend() {
+    DatabaseMetaData metadata = DatabaseMetaDataMocks.createMySQL(8);
+    MysqlDialect dialect = new MysqlDialect(metadata, snakeNaming);
+
+    String result = dialect.makeStringPrepend("title");
+    assertEquals("CONCAT(?, title)", result,
+        "MySQL 应该使用 CONCAT 函数进行字符串前置拼接");
+  }
+
+  @Test
+  @DisplayName("测试带表别名的字符串拼接")
+  void testMakeStringConcatWithTableAlias() {
+    DatabaseMetaData metadata = DatabaseMetaDataMocks.createMySQL(8);
+    MysqlDialect dialect = new MysqlDialect(metadata, snakeNaming);
+
+    String result = dialect.makeStringConcat("u.full_name");
+    assertEquals("CONCAT(u.full_name, ?)", result,
+        "MySQL 应该正确处理带表别名的列名");
+  }
+
+  @Test
+  @DisplayName("测试带反引号的列名字符串拼接")
+  void testMakeStringConcatWithQuotedColumn() {
+    DatabaseMetaData metadata = DatabaseMetaDataMocks.createMySQL(8);
+    MysqlDialect dialect = new MysqlDialect(metadata, snakeNaming);
+
+    String result = dialect.makeStringConcat("`order`");
+    assertEquals("CONCAT(`order`, ?)", result,
+        "MySQL 应该正确处理带反引号的列名");
+  }
 }

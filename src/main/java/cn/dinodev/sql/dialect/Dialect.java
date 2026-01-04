@@ -210,6 +210,38 @@ public interface Dialect {
     return "?";
   }
 
+  // ==================== 字符串操作 ====================
+
+  /**
+   * 生成字符串拼接表达式（在末尾追加）。
+   * <p>
+   * 不同数据库的实现：
+   * <ul>
+   *   <li><b>MySQL</b>: CONCAT(column, ?)</li>
+   *   <li><b>PostgreSQL</b>: column || ?</li>
+   * </ul>
+   * 
+   * @param column 列名
+   * @return 字符串拼接表达式
+   * @since 2026-01-04
+   */
+  String makeStringConcat(String column);
+
+  /**
+   * 生成字符串前置拼接表达式（在开头添加）。
+   * <p>
+   * 不同数据库的实现：
+   * <ul>
+   *   <li><b>MySQL</b>: CONCAT(?, column)</li>
+   *   <li><b>PostgreSQL</b>: ? || column</li>
+   * </ul>
+   * 
+   * @param column 列名
+   * @return 字符串前置拼接表达式
+   * @since 2026-01-04
+   */
+  String makeStringPrepend(String column);
+
   // ==================== JSON/JSONB 操作 ====================
 
   /**
