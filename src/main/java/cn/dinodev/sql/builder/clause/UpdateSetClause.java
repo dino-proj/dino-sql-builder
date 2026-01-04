@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import cn.dinodev.sql.JsonType;
 import cn.dinodev.sql.SqlBuilder;
 
 /**
@@ -396,29 +397,34 @@ public interface UpdateSetClause<T extends SqlBuilder> extends ClauseSupport<T> 
   // ==================== JSON/JSONB 操作 ====================
 
   /**
-   * 使用回调方式执行 JSONB 链式操作（PostgreSQL）。
+   * 使用回调方式执行 JSON/JSONB 链式操作。
    * <p>
-   * 此方法接受一个 Consumer 回调，在回调执行完毕后自动应用操作，无需显式调用 apply()。
+   * 此方法接受一个 Consumer 回调，在回调执行完毕后自动应用操作，无需显式调用 close()。
    * 这是最推荐的使用方式，代码更简洁。
+   * <p>
+   * 支持 PostgreSQL JSONB 和 MySQL JSON，自动适配数据库语法。
    * <p>
    * 使用示例：
    * <pre>{@code
-   * builder.jsonb("settings", ops -> ops
+   * // PostgreSQL
+   * builder.json("settings", ops -> ops
    *     .merge("{\"theme\":\"dark\"}")
    *     .setPath("{notifications,email}", true)
    *     .removeKey("deprecated")
-   *     .stripNulls()
-   * ); // 自动应用，无需调用 apply()
+   * ); // 自动应用
+   * 
+   * // MySQL 同样的代码，自动生成适配的 SQL
    * }</pre>
    * 
    * @param column 要操作的列名
-   * @param operations JSONB 操作回调函数
+   * @param operations JSON 操作回调函数
    * @return 构建器本身
-   * @see JsonbOperations
-   * @see #jsonb(String)
+   * @see JsonOperations
    */
-  default T jsonb(String column, Consumer<JsonbOperations<T>> operations) {
-    JsonbOperations<T> ops = new JsonbOperations<T>(
+  default T json(String column, Consumer<JsonOperations<T>> operations) {
+    JsonOperations<T> ops = new JsonOperations<T>(
+        dialect().jsonDialect(),
+        JsonType.JSON, // 使用 JSON 类型
         (expr, params) -> {
           if (params == null || params.isEmpty()) {
             set(column + " = " + expr);
@@ -432,29 +438,67 @@ public interface UpdateSetClause<T extends SqlBuilder> extends ClauseSupport<T> 
   }
 
   /**
-   * 条件执行 JSONB 链式操作。
+   * 条件执行 JSON/JSONB 链式操作。
    * 
    * @param condition 条件
    * @param column 要操作的列名
-   * @param operations JSONB 操作回调函数
+   * @param operations JSON 操作回调函数
    * @return 构建器本身
    */
-  default T jsonbIf(boolean condition, String column, Consumer<JsonbOperations<T>> operations) {
+  default T jsonIf(boolean condition, String column, Consumer<JsonOperations<T>> operations) {
     if (condition) {
-      return jsonb(column, operations);
+      return json(column, operations);
     }
     return self();
   }
 
   /**
-   * 设置 JSON 类型列值（PostgreSQL）。
+   * 使用回调方式执行 JSONB 链式操作。
+   * <p>
+   * 此方法与 json() 的区别在于使用 JSONB 类型，适用于 PostgreSQL。
+   * 
+   * @param column 要操作的列名
+   * @param operations JSON 操作回调函数
+   * @return 构建器本身
+   */
+  default T jsonb(String column, Consumer<JsonOperations<T>> operations) {
+    JsonOperations<T> ops = new JsonOperations<T>(
+        dialect().jsonDialect(),
+        JsonType.JSONB, // 使用 JSONB 类型
+        (expr, params) -> {
+          if (params == null || params.isEmpty()) {
+            set(column + " = " + expr);
+          } else {
+            set(column + " = " + expr, params);
+          }
+        }, column);
+    operations.accept(ops);
+    ops.close(); // 自动应用
+    return self();
+  }
+
+  /**
+   * 条件执行 JSONB 链式操作（别名，建议使用 jsonIf 方法）。
+   * 
+   * @param condition 条件
+   * @param column 要操作的列名
+   * @param operations JSON 操作回调函数
+   * @return 构建器本身
+   * @see #jsonIf(boolean, String, Consumer)
+   */
+  default T jsonbIf(boolean condition, String column, Consumer<JsonOperations<T>> operations) {
+    return jsonIf(condition, column, operations);
+  }
+
+  /**
+   * 设置 JSON 类型列值。
    * 
    * @param column 列名
    * @param value JSON 值
    * @return 构建器本身
    */
   default T setJson(String column, Object value) {
-    return set(column, "?::json", value);
+    return set(column, dialect().jsonDialect().makeTypeCast(JsonType.JSON), value);
   }
 
   /**
@@ -487,14 +531,14 @@ public interface UpdateSetClause<T extends SqlBuilder> extends ClauseSupport<T> 
   }
 
   /**
-   * 设置 JSONB 类型列值（PostgreSQL）。
+   * 设置 JSONB 类型列值。
    * 
    * @param column 列名
    * @param value JSONB 值
    * @return 构建器本身
    */
-  default T jsonbSet(String column, Object value) {
-    return set(column, "?::jsonb", value);
+  default T setJsonb(String column, Object value) {
+    return set(column, dialect().jsonDialect().makeTypeCast(JsonType.JSONB), value);
   }
 
   /**
@@ -505,9 +549,9 @@ public interface UpdateSetClause<T extends SqlBuilder> extends ClauseSupport<T> 
    * @param value JSONB 值
    * @return 构建器本身
    */
-  default T jsonbSetIf(boolean condition, String column, Object value) {
+  default T setJsonbIf(boolean condition, String column, Object value) {
     if (condition) {
-      return jsonbSet(column, value);
+      return setJsonb(column, value);
     }
     return self();
   }
@@ -519,340 +563,11 @@ public interface UpdateSetClause<T extends SqlBuilder> extends ClauseSupport<T> 
    * @param value JSONB 值
    * @return 构建器本身
    */
-  default T jsonbSetIfNotNull(String column, Object value) {
+  default T setJsonbIfNotNull(String column, Object value) {
     if (value != null) {
-      return jsonbSet(column, value);
+      return setJsonb(column, value);
     }
     return self();
-  }
-
-  /**
-   * 更新 JSONB 字段的嵌套路径值（PostgreSQL）。
-   * <p>
-   * 使用 jsonb_set 函数更新 JSONB 对象中指定路径的值。
-   * 路径格式：{key1,key2,key3} 表示嵌套层级。
-   * 
-   * @param column 列名
-   * @param path JSONB 路径，如 "{address,city}" 或 "{users,0,name}"
-   * @param value 新值
-   * @return 构建器本身
-   */
-  default T jsonbSetPath(String column, String path, Object value) {
-    return set(column, "jsonb_set(" + column + ", '" + path + "', ?::jsonb)", value);
-  }
-
-  /**
-   * 条件更新 JSONB 字段的嵌套路径值。
-   * 
-   * @param condition 条件
-   * @param column 列名
-   * @param path JSONB 路径
-   * @param value 新值
-   * @return 构建器本身
-   */
-  default T jsonbSetPathIf(boolean condition, String column, String path, Object value) {
-    if (condition) {
-      return jsonbSetPath(column, path, value);
-    }
-    return self();
-  }
-
-  /**
-   * 值不为 null 时更新 JSONB 字段的嵌套路径值。
-   * 
-   * @param column 列名
-   * @param path JSONB 路径
-   * @param value 新值
-   * @return 构建器本身
-   */
-  default T jsonbSetPathIfNotNull(String column, String path, Object value) {
-    if (value != null) {
-      return jsonbSetPath(column, path, value);
-    }
-    return self();
-  }
-
-  /**
-   * 更新 JSONB 字段的嵌套路径值，路径不存在时创建（PostgreSQL）。
-   * 
-   * @param column 列名
-   * @param path JSONB 路径
-   * @param value 新值
-   * @param createMissing 是否创建缺失的路径，默认 true
-   * @return 构建器本身
-   */
-  default T jsonbSetPath(String column, String path, Object value, boolean createMissing) {
-    return set(column, "jsonb_set(" + column + ", '" + path + "', ?::jsonb, " + createMissing + ")", value);
-  }
-
-  /**
-   * 合并 JSONB 对象（PostgreSQL）。
-   * <p>
-   * 使用 || 运算符合并两个 JSONB 对象，新值会覆盖已有的键。
-   * 
-   * @param column 列名
-   * @param value 要合并的 JSONB 对象
-   * @return 构建器本身
-   */
-  default T jsonbMerge(String column, Object value) {
-    return set(column, column + " || ?::jsonb", value);
-  }
-
-  /**
-   * 条件合并 JSONB 对象。
-   * 
-   * @param condition 条件
-   * @param column 列名
-   * @param value 要合并的 JSONB 对象
-   * @return 构建器本身
-   */
-  default T jsonbMergeIf(boolean condition, String column, Object value) {
-    if (condition) {
-      return jsonbMerge(column, value);
-    }
-    return self();
-  }
-
-  /**
-   * 值不为 null 时合并 JSONB 对象。
-   * 
-   * @param column 列名
-   * @param value 要合并的 JSONB 对象
-   * @return 构建器本身
-   */
-  default T jsonbMergeIfNotNull(String column, Object value) {
-    if (value != null) {
-      return jsonbMerge(column, value);
-    }
-    return self();
-  }
-
-  /**
-   * 删除 JSONB 对象的指定键（PostgreSQL）。
-   * <p>
-   * 使用 - 运算符删除顶层键。
-   * 
-   * @param column 列名
-   * @param key 要删除的键
-   * @return 构建器本身
-   */
-  default T jsonbRemoveKey(String column, String key) {
-    return set(column + " = " + column + " - '" + key + "'");
-  }
-
-  /**
-   * 条件删除 JSONB 对象的指定键。
-   * 
-   * @param condition 条件
-   * @param column 列名
-   * @param key 要删除的键
-   * @return 构建器本身
-   */
-  default T jsonbRemoveKeyIf(boolean condition, String column, String key) {
-    if (condition) {
-      return jsonbRemoveKey(column, key);
-    }
-    return self();
-  }
-
-  /**
-   * 删除 JSONB 对象的多个键（PostgreSQL）。
-   * 
-   * @param column 列名
-   * @param keys 要删除的键数组
-   * @return 构建器本身
-   */
-  default T jsonbRemoveKeys(String column, String... keys) {
-    if (keys == null || keys.length == 0) {
-      return self();
-    }
-    StringBuilder keysArray = new StringBuilder("ARRAY[");
-    for (int i = 0; i < keys.length; i++) {
-      if (i > 0)
-        keysArray.append(", ");
-      keysArray.append("'").append(keys[i]).append("'");
-    }
-    keysArray.append("]");
-    return set(column + " = " + column + " - " + keysArray.toString());
-  }
-
-  /**
-   * 删除 JSONB 对象的嵌套路径（PostgreSQL）。
-   * <p>
-   * 使用 #- 运算符删除指定路径的字段。
-   * 
-   * @param column 列名
-   * @param path JSONB 路径，如 "{address,city}"
-   * @return 构建器本身
-   */
-  default T jsonbRemovePath(String column, String path) {
-    return set(column + " = " + column + " #- '" + path + "'");
-  }
-
-  /**
-   * 条件删除 JSONB 对象的嵌套路径。
-   * 
-   * @param condition 条件
-   * @param column 列名
-   * @param path JSONB 路径
-   * @return 构建器本身
-   */
-  default T jsonbRemovePathIf(boolean condition, String column, String path) {
-    if (condition) {
-      return jsonbRemovePath(column, path);
-    }
-    return self();
-  }
-
-  /**
-   * 向 JSONB 数组追加元素（PostgreSQL）。
-   * <p>
-   * 使用 || 运算符向 JSONB 数组末尾追加元素。
-   * 
-   * @param column 列名
-   * @param value 要追加的元素
-   * @return 构建器本身
-   */
-  default T jsonbAppendArray(String column, Object value) {
-    return set(column, column + " || ?::jsonb", value);
-  }
-
-  /**
-   * 条件向 JSONB 数组追加元素。
-   * 
-   * @param condition 条件
-   * @param column 列名
-   * @param value 要追加的元素
-   * @return 构建器本身
-   */
-  default T jsonbAppendArrayIf(boolean condition, String column, Object value) {
-    if (condition) {
-      return jsonbAppendArray(column, value);
-    }
-    return self();
-  }
-
-  /**
-   * 向 JSONB 数组开头添加元素（PostgreSQL）。
-   * 
-   * @param column 列名
-   * @param value 要添加的元素
-   * @return 构建器本身
-   */
-  default T jsonbPrependArray(String column, Object value) {
-    return set(column, "?::jsonb || " + column, value);
-  }
-
-  /**
-   * 更新 JSONB 数组指定索引的元素（PostgreSQL）。
-   * 
-   * @param column 列名
-   * @param index 数组索引（从 0 开始）
-   * @param value 新值
-   * @return 构建器本身
-   */
-  default T jsonbSetArrayElement(String column, int index, Object value) {
-    return jsonbSetPath(column, "{" + index + "}", value);
-  }
-
-  /**
-   * 条件更新 JSONB 数组指定索引的元素。
-   * 
-   * @param condition 条件
-   * @param column 列名
-   * @param index 数组索引
-   * @param value 新值
-   * @return 构建器本身
-   */
-  default T jsonbSetArrayElementIf(boolean condition, String column, int index, Object value) {
-    if (condition) {
-      return jsonbSetArrayElement(column, index, value);
-    }
-    return self();
-  }
-
-  /**
-   * 从 JSONB 数组中删除指定索引的元素（PostgreSQL）。
-   * 
-   * @param column 列名
-   * @param index 数组索引（从 0 开始）
-   * @return 构建器本身
-   */
-  default T jsonbRemoveArrayElement(String column, int index) {
-    return jsonbRemovePath(column, "{" + index + "}");
-  }
-
-  /**
-   * 清理 JSONB 对象中的所有 null 值（PostgreSQL）。
-   * <p>
-   * 使用 jsonb_strip_nulls 函数移除所有值为 null 的字段。
-   * 
-   * @param column 列名
-   * @return 构建器本身
-   */
-  default T jsonbStripNulls(String column) {
-    return set(column + " = jsonb_strip_nulls(" + column + ")");
-  }
-
-  /**
-   * 条件清理 JSONB 对象中的所有 null 值。
-   * 
-   * @param condition 条件
-   * @param column 列名
-   * @return 构建器本身
-   */
-  default T jsonbStripNullsIf(boolean condition, String column) {
-    if (condition) {
-      return jsonbStripNulls(column);
-    }
-    return self();
-  }
-
-  /**
-   * 将任意值转换为 JSONB 类型（PostgreSQL）。
-   * 
-   * @param column 列名
-   * @param value 要转换的值
-   * @return 构建器本身
-   */
-  default T jsonbFromValue(String column, Object value) {
-    return set(column, "to_jsonb(?)", value);
-  }
-
-  /**
-   * 条件将任意值转换为 JSONB 类型。
-   * 
-   * @param condition 条件
-   * @param column 列名
-   * @param value 要转换的值
-   * @return 构建器本身
-   */
-  default T jsonbFromValueIf(boolean condition, String column, Object value) {
-    if (condition) {
-      return jsonbFromValue(column, value);
-    }
-    return self();
-  }
-
-  /**
-   * 使用 JSON 路径查询更新值（PostgreSQL jsonb_set 高级用法）。
-   * <p>
-   * 支持复杂的嵌套路径操作，路径中的键名如果包含特殊字符需要用引号包裹。
-   * 
-   * @param column 列名
-   * @param pathElements 路径元素数组，如 ["address", "city"] 或 ["users", "0", "name"]
-   * @param value 新值
-   * @return 构建器本身
-   */
-  default T jsonbSetPathElements(String column, String[] pathElements, Object value) {
-    StringBuilder path = new StringBuilder("{");
-    for (int i = 0; i < pathElements.length; i++) {
-      if (i > 0)
-        path.append(",");
-      path.append(pathElements[i]);
-    }
-    path.append("}");
-    return jsonbSetPath(column, path.toString(), value);
   }
 
   /**
