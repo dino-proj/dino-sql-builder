@@ -5,7 +5,8 @@ package cn.dinodev.sql.dialect;
 
 import java.sql.DatabaseMetaData;
 
-import cn.dinodev.sql.utils.NamingUtils;
+import cn.dinodev.sql.naming.NamingConversition;
+import cn.dinodev.sql.utils.StringUtils;
 
 /**
  * MySQL 数据库方言实现。
@@ -17,8 +18,20 @@ import cn.dinodev.sql.utils.NamingUtils;
  */
 
 public class MysqlDialect implements Dialect {
+  /** 
+   * 方言名称 
+   */
   private static final String dialectName = "mysql";
+
+  /** 
+   * 命名转换器实例 
+   */
   private final NamingConversition namingConversitionInstance;
+
+  /** 
+   * 数据库主版本号 
+   */
+  private final int majorVersion;
 
   /**
    * 构造函数，创建MySQL数据库方言实例
@@ -27,6 +40,13 @@ public class MysqlDialect implements Dialect {
    */
   public MysqlDialect(DatabaseMetaData metaData, NamingConversition namingConversition) {
     this.namingConversitionInstance = namingConversition;
+    int major = 0;
+    try {
+      major = metaData.getDatabaseMajorVersion();
+    } catch (Exception e) {
+      // 忽略异常，保持默认版本号0
+    }
+    this.majorVersion = major;
   }
 
   @Override
@@ -39,6 +59,15 @@ public class MysqlDialect implements Dialect {
     return dialectName;
   }
 
+  /** 
+   * 获取主版本号
+   * @return 主版本号
+   */
+  @Override
+  public int getMajorVersion() {
+    return majorVersion;
+  }
+
   @Override
   public String limitOffset(int limit, long offset) {
     if (limit > 0) {
@@ -48,19 +77,14 @@ public class MysqlDialect implements Dialect {
   }
 
   @Override
-  public String getSelectUUIDSql() {
-    return "SELECT UUID()";
-  }
-
-  @Override
   public String quoteTableName(String name) {
     // MySQL表名、字段名建议用反引号包裹
-    return NamingUtils.wrapIfMissing(name, '`');
+    return StringUtils.wrapIfMissing(name, '`');
   }
 
   @Override
   public String quoteColumnName(String columnName) {
-    return NamingUtils.wrapIfMissing(columnName, '`');
+    return StringUtils.wrapIfMissing(columnName, '`');
   }
 
   @Override
@@ -80,6 +104,16 @@ public class MysqlDialect implements Dialect {
   }
 
   @Override
+  public String getUuidFunction() {
+    return "UUID()";
+  }
+
+  @Override
+  public String getSelectUUIDSql() {
+    return "SELECT UUID()";
+  }
+
+  @Override
   public String getCurrentSchemaSql() {
     // MySQL 当前 schema 可用 database()
     return "SELECT DATABASE()";
@@ -93,5 +127,31 @@ public class MysqlDialect implements Dialect {
     } catch (Exception e) {
       return false;
     }
+  }
+
+  /**
+   * MySQL 使用 REGEXP 操作符进行正则表达式匹配
+   * <p>
+   * 生成形如: column REGEXP ?
+   * 
+   * @param column 列名
+   * @return 正则表达式匹配的 SQL 表达式
+   */
+  @Override
+  public String makeRegexpExpr(String column) {
+    return column + " REGEXP ?";
+  }
+
+  /**
+   * MySQL 使用 NOT REGEXP 操作符进行正则表达式不匹配
+   * <p>
+   * 生成形如: column NOT REGEXP ?
+   * 
+   * @param column 列名
+   * @return 正则表达式不匹配的 SQL 表达式
+   */
+  @Override
+  public String makeNotRegexpExpr(String column) {
+    return column + " NOT REGEXP ?";
   }
 }
