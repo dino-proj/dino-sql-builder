@@ -142,6 +142,23 @@ public interface WhereClauseSupport<T extends SqlBuilder> extends ClauseSupport<
   }
 
   /**
+   * 添加条件表达式，支持自定义逻辑符。
+   * 
+   * @param column 列名
+   * @param op 操作符
+   * @param value 参数值
+   * @param logic 逻辑运算符（AND/OR）
+   * @return 构建器本身
+   */
+  default T and(final String column, final Oper op, final Object value, final Logic logic) {
+    if (logic == Logic.OR) {
+      return or(String.format("%s %s ?", column, op.getOp()), value);
+    } else {
+      return and(String.format("%s %s ?", column, op.getOp()), value);
+    }
+  }
+
+  /**
    * 添加 OR 连接的条件表达式。
    * 
    * @param expr SQL 条件表达式
