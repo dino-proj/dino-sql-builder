@@ -7,6 +7,8 @@
   - `builder/`：各类 SQL 构建器（如 `SelectSqlBuilder`, `InsertSqlBuilder`, `UpdateSqlBuilder`, `DeleteSqlBuilder`），实现链式、类型安全 SQL 生成。
   - `builder/clause/`：SQL 子句封装（如 `WhereClause`, `JoinClause`, `GroupByClause`, `OrderByClause`, `LimitOffsetClause` 等），支持复杂查询构建。
   - `dialect/`：数据库方言支持（如 `MysqlDialect`, `PostgreSQLDialect`），通过方言对象适配 SQL 语法差异。
+    - `JsonDialect` 接口：定义 JSON/JSONB 操作的方言接口，支持类型转换、合并、路径操作、键操作和数组操作。
+    - `MysqlJsonDialect`, `PostgreSQLJsonDialect`：分别实现 MySQL 和 PostgreSQL 的 JSON 操作。
   - `naming/`：命名转换策略（`CamelNamingConversition`, `SnakeNamingConversition`），实现驼峰与下划线命名自动转换。
   - `utils/`：工具类，提供 SQL 构建辅助功能。
 - 典型用法见 `README.md` 示例，推荐从 `SelectSqlBuilder.create(dialect, table)` 入手。
@@ -20,7 +22,7 @@
 ## 约定与模式
 - **链式调用**：所有 SQL 构建器均采用 Fluent API 风格，支持链式调用，提升代码可读性。
 - **类型安全**：构建器使用强类型参数，避免 SQL 注入风险，参数统一通过预编译方式绑定。
-- **方言适配**：数据库差异通过传入 `Dialect` 实例实现，推荐优先使用已有方言类（`MysqlDialect`、`PostgreSQLDialect`）。
+- **方言适配**：数据库差异通过传入 `Dialect` 实例实现，推荐优先使用已有方言类（`MysqlDialect`、`PostgreSQLDialect`）。JSON 操作通过 `JsonDialect` 接口适配不同数据库的 JSON 语法。
 - **命名转换**：字段和表名的驼峰/下划线转换由 `NamingConversition` 接口及实现类自动处理。
 - **SQL 输出**：所有 SQL 构建器实现 `SqlBuilder` 接口，通过 `getSql()` 获取 SQL 字符串，通过 `getParams()` 获取参数数组。
 - **零依赖原则**：项目核心代码无第三方运行时依赖，仅在测试阶段依赖 JUnit 5。
@@ -33,6 +35,7 @@
 - **新增数据库方言**：
   - 实现 `Dialect` 接口，定义数据库特定的 SQL 语法规则。
   - 参考 `MysqlDialect` 和 `PostgreSQLDialect` 的实现模式。
+  - 如需支持 JSON 操作，同时实现 `JsonDialect` 接口或继承现有 JSON 方言类。
   - 推荐在 `src/main/java/cn/dinodev/sql/dialect/` 目录下创建。
 - **新增 SQL 子句**：
   - 继承 `ClauseSupport` 基类，实现特定子句逻辑。
@@ -45,9 +48,14 @@
 - `src/main/java/cn/dinodev/sql/`：
   - `SqlBuilder.java`：SQL 构建器核心接口
   - `Logic.java`, `Oper.java`, `Range.java`：SQL 操作符和逻辑枚举定义
+  - `JsonType.java`：JSON 数据类型枚举（JSON、JSONB）
   - `builder/`：SQL 构建器实现（SELECT、INSERT、UPDATE、DELETE）
   - `builder/clause/`：SQL 子句封装（WHERE、JOIN、GROUP BY、ORDER BY 等）
+    - `JsonOperations.java`：JSON 操作封装类，提供链式 JSON 操作 API
   - `dialect/`：数据库方言（MySQL、PostgreSQL）
+    - `Dialect.java`：数据库方言基础接口
+    - `JsonDialect.java`：JSON/JSONB 操作方言接口
+    - `MysqlJsonDialect.java`、`PostgreSQLJsonDialect.java`：JSON 方言实现
   - `naming/`：命名转换策略（驼峰、下划线）
   - `utils/`：工具类
 - `src/test/java/cn/dinodev/sql/`：
@@ -77,7 +85,8 @@
   - 条件构建（WHERE、HAVING）
   - 排序和分页（ORDER BY、LIMIT/OFFSET）
   - 高级特性（WITH 子句、窗口函数等）
-  - 多数据库方言适配（MySQL、PostgreSQL 等）
+  - JSON 操作（合并、路径设置、键删除、数组操作等）
+  - 多数据库方言适配（MySQL、PostgreSQL 等，包括 JSON 方言）
 - **运行测试**：
   - 单个测试：`mvn test -Dtest=SelectSqlBuilderV2Test`
   - 全部测试：`mvn test` 或运行 `AllTestsSuite`
