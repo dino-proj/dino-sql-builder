@@ -152,9 +152,6 @@ public class RangeWhereClauseTest {
     if (true) {
       builder.notIn("status", new Object[] { 0, -1 });
     }
-    if (false) {
-      builder.notIn("role", new Object[] { "guest" });
-    }
 
     assertSqlWithParams(builder, "notInIf",
         "SELECT * FROM users WHERE status NOT IN (?, ?)",
