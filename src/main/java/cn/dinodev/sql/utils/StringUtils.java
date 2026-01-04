@@ -12,11 +12,11 @@ import java.util.Locale;
  * @since 2022-03-07
  */
 
-public final class NamingUtils {
+public final class StringUtils {
 
   private static final char UNDER_SCORE_CHAR = '_';
 
-  private NamingUtils() {
+  private StringUtils() {
   }
 
   /**
