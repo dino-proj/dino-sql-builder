@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+import cn.dinodev.sql.JsonPath;
 import cn.dinodev.sql.JsonType;
 import cn.dinodev.sql.dialect.JsonDialect;
 
@@ -25,20 +26,25 @@ import cn.dinodev.sql.dialect.JsonDialect;
  * // 方式1: 使用 try-with-resources 自动应用
  * try (var ops = builder.json("settings")) {
  *     ops.merge("{\"theme\":\"dark\"}")
- *        .setPath("{notifications,email}", true)
+ *        .setPath(JsonPath.of("notifications.email"), true)
  *        .removeKey("deprecated");
  * } // 自动应用
  * 
  * // 方式2: 使用回调自动应用（推荐）
  * builder.json("settings", ops -> ops
  *     .merge("{\"theme\":\"dark\"}")
- *     .setPath("{notifications,email}", true)
+ *     .setPath(JsonPath.of("notifications.email"), true)
  *     .removeKey("deprecated")
  * ); // 自动应用
  * 
+ * // 方式3: of() 后继续链式调用
+ * builder.json("order", ops -> ops
+ *     .setPath(JsonPath.of("items").index(0).key("quantity"), 10)
+ * );
+ * 
  * // 跨数据库支持
- * // PostgreSQL: 生成 settings || ?::jsonb
- * // MySQL:      生成 JSON_MERGE_PATCH(settings, ?)
+ * // PostgreSQL: 生成 jsonb_set(settings, '{notifications,email}', ?::jsonb, true)
+ * // MySQL:      生成 JSON_SET(settings, '$.notifications.email', ?)
  * }</pre>
  * 
  * @param <T> 具体的 SQL 构建器类型
@@ -98,25 +104,37 @@ public class JsonOperations<T> implements AutoCloseable {
    */
   public JsonOperations<T> merge(Object value) {
     assert !applied : "JSON 操作已应用，无法继续添加操作";
-
     operations.add(new MergeOperation(value));
     return this;
   }
 
   /**
-   * 更新嵌套路径的值。
+   * 设置 JSON 的指定路径的值（使用 JsonPath）。
    * <p>
    * 不同数据库实现：
    * <ul>
    *   <li><b>PostgreSQL</b>: jsonb_set(column, '{path}', value, true)</li>
    *   <li><b>MySQL</b>: JSON_SET(column, '$.path', value)</li>
    * </ul>
+   * <p>
+   * 使用示例：
+   * <pre>{@code
+   * // 方式1: of() 点分隔
+   * ops.setPath(JsonPath.of("address.city"), "Beijing")
    * 
-   * @param path JSON 路径（PostgreSQL 格式），如 "{address,city}" 或 "{users,0,name}"
+   * // 方式2: of() 混合参数
+   * ops.setPath(JsonPath.of("users", 0, "name"), "Alice")
+   * 
+   * // 方式3: of() 后链式调用（推荐）
+   * ops.setPath(JsonPath.of("items").index(0).key("quantity"), 10)
+   * }</pre>
+   * 
+   * @param path JSON 路径对象
    * @param value 新值
    * @return 当前构建器
+   * @since 2026-01-04
    */
-  public JsonOperations<T> setPath(String path, Object value) {
+  public JsonOperations<T> setPath(JsonPath path, Object value) {
     assert !applied : "JSON 操作已应用，无法继续添加操作";
 
     operations.add(new SetPathOperation(path, value, true));
@@ -124,16 +142,17 @@ public class JsonOperations<T> implements AutoCloseable {
   }
 
   /**
-   * 更新嵌套路径的值，可指定是否创建缺失路径。
+   * 更新嵌套路径的值，可指定是否创建缺失路径（使用 JsonPath）。
    * <p>
    * 注意：MySQL 的 JSON_SET 总是创建缺失的路径，createMissing 参数仅对 PostgreSQL 有效。
    * 
-   * @param path JSON 路径（PostgreSQL 格式）
+   * @param path JSON 路径对象
    * @param value 新值
    * @param createMissing 是否创建缺失的路径（仅 PostgreSQL）
    * @return 当前构建器
+   * @since 2026-01-04
    */
-  public JsonOperations<T> setPath(String path, Object value, boolean createMissing) {
+  public JsonOperations<T> setPath(JsonPath path, Object value, boolean createMissing) {
     assert !applied : "JSON 操作已应用，无法继续添加操作";
 
     operations.add(new SetPathOperation(path, value, createMissing));
@@ -172,8 +191,7 @@ public class JsonOperations<T> implements AutoCloseable {
     return this;
   }
 
-  /**
-   * 删除嵌套路径。
+  /**（使用 JsonPath）。
    * <p>
    * 不同数据库实现：
    * <ul>
@@ -181,10 +199,11 @@ public class JsonOperations<T> implements AutoCloseable {
    *   <li><b>MySQL</b>: JSON_REMOVE(column, '$.path')</li>
    * </ul>
    * 
-   * @param path JSON 路径（PostgreSQL 格式），如 "{address,city}"
+   * @param path JSON 路径对象
    * @return 当前构建器
+   * @since 2026-01-04
    */
-  public JsonOperations<T> removePath(String path) {
+  public JsonOperations<T> removePath(JsonPath path) {
     assert !applied : "JSON 操作已应用，无法继续添加操作";
 
     operations.add(new RemovePathOperation(path));
@@ -192,9 +211,13 @@ public class JsonOperations<T> implements AutoCloseable {
   }
 
   /**
-   * 向数组末尾追加元素。
+   * 追加元素到 JSON 数组末尾。
    * <p>
-   * 使用 || 运算符追加。
+   * 不同数据库实现：
+   * <ul>
+   *   <li><b>PostgreSQL</b>: column || value::jsonb</li>
+   *   <li><b>MySQL</b>: JSON_ARRAY_APPEND(column, '$', value)</li>
+   * </ul>
    * 
    * @param value 要追加的元素
    * @return 当前构建器
@@ -229,7 +252,7 @@ public class JsonOperations<T> implements AutoCloseable {
   public JsonOperations<T> setArrayElement(int index, Object value) {
     assert !applied : "JSON 操作已应用，无法继续添加操作";
 
-    operations.add(new SetPathOperation(dialect.makePath(index), value, true));
+    operations.add(new SetPathOperation(JsonPath.of().index(index), value, true));
     return this;
   }
 
@@ -242,7 +265,7 @@ public class JsonOperations<T> implements AutoCloseable {
   public JsonOperations<T> removeArrayElement(int index) {
     assert !applied : "JSON 操作已应用，无法继续添加操作";
 
-    operations.add(new RemovePathOperation(dialect.makePath(index)));
+    operations.add(new RemovePathOperation(JsonPath.of().index(index)));
     return this;
   }
 
@@ -360,14 +383,14 @@ public class JsonOperations<T> implements AutoCloseable {
   }
 
   /**
-   * 设置路径操作。
+   * 设置路径操作（使用 JsonPath）。
    */
   private class SetPathOperation implements JsonOperation {
-    private final String path;
+    private final JsonPath path;
     private final Object value;
     private final boolean createMissing;
 
-    SetPathOperation(String path, Object value, boolean createMissing) {
+    SetPathOperation(JsonPath path, Object value, boolean createMissing) {
       this.path = path;
       this.value = value;
       this.createMissing = createMissing;
@@ -427,18 +450,18 @@ public class JsonOperations<T> implements AutoCloseable {
   }
 
   /**
-   * 删除路径操作。
+   * 删除路径操作（使用 JsonPath）。
    */
   private class RemovePathOperation implements JsonOperation {
-    private final String path;
+    private final JsonPath path;
 
-    RemovePathOperation(String path) {
+    RemovePathOperation(JsonPath path) {
       this.path = path;
     }
 
     @Override
     public String buildExpression(String currentExpr) {
-      return dialect.makeJsonRemovePath(currentExpr, path);
+      return dialect.makeJsonRemovePath(jsonType, currentExpr, path);
     }
 
     @Override
