@@ -1,7 +1,7 @@
 // Copyright 2024 dinosdev.cn.
 // SPDX-License-Identifier: Apache-2.0
 
-package cn.dinodev.sql.builder;
+package cn.dinodev.sql.builder.clause;
 
 import static cn.dinodev.sql.testutil.SqlTestHelper.assertSql;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,25 +11,26 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import cn.dinodev.sql.NullsOrder;
+import cn.dinodev.sql.builder.SelectSqlBuilder;
 import cn.dinodev.sql.dialect.MysqlDialect;
 import cn.dinodev.sql.dialect.PostgreSQLDialect;
 import cn.dinodev.sql.naming.CamelNamingConversition;
 
 /**
- * ORDER BY 增强功能测试类。
+ * ORDER BY NULLS 处理测试类。
  * 
- * <p>测试 ORDER BY 的 SQL 标准特性，包括：
+ * <p>测试 ORDER BY 的 NULLS 处理功能，包括：
  * <ul>
  *   <li>NULLS FIRST / NULLS LAST 语法</li>
- *   <li>位置参数排序（序号排序）</li>
- *   <li>CASE WHEN 排序表达式</li>
+ *   <li>不同数据库方言的 NULLS 处理</li>
+ *   <li>与排序方向的组合</li>
  * </ul>
  * 
  * @author Cody Lu
  * @since 2024-12-31
  */
-@DisplayName("ORDER BY增强功能测试（SQL标准）")
-public class OrderByEnhancedTest {
+@DisplayName("ORDER BY NULLS处理测试")
+public class OrderByNullsHandlingTest {
 
         private MysqlDialect mysqlDialect;
         private PostgreSQLDialect postgresDialect;

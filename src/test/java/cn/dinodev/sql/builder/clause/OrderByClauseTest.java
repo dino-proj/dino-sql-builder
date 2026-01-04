@@ -1,7 +1,7 @@
 // Copyright 2024 dinosdev.cn.
 // SPDX-License-Identifier: Apache-2.0
 
-package cn.dinodev.sql.builder;
+package cn.dinodev.sql.builder.clause;
 
 import static cn.dinodev.sql.testutil.SqlTestHelper.assertSql;
 
@@ -9,11 +9,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import cn.dinodev.sql.builder.SelectSqlBuilder;
 import cn.dinodev.sql.dialect.MysqlDialect;
 import cn.dinodev.sql.naming.CamelNamingConversition;
 
 /**
- * ORDER BY 排序功能测试类。
+ * ORDER BY 子句测试类。
  * 
  * <p>测试 {@link SelectSqlBuilder} 中 ORDER BY 相关功能，包括：
  * <ul>
@@ -25,8 +26,8 @@ import cn.dinodev.sql.naming.CamelNamingConversition;
  * @author Cody Lu
  * @since 2024-12-31
  */
-@DisplayName("OrderBy 功能测试")
-public class OrderByTest {
+@DisplayName("ORDER BY子句测试")
+public class OrderByClauseTest {
 
   private MysqlDialect mysql;
 

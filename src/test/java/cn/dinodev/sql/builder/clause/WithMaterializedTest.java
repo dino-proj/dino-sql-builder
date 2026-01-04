@@ -1,7 +1,7 @@
 // Copyright 2024 dinosdev.cn.
 // SPDX-License-Identifier: Apache-2.0
 
-package cn.dinodev.sql.builder;
+package cn.dinodev.sql.builder.clause;
 
 import static cn.dinodev.sql.testutil.SqlTestHelper.assertSql;
 import static cn.dinodev.sql.testutil.SqlTestHelper.assertSqlWithParams;
@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import cn.dinodev.sql.MaterializationHint;
+import cn.dinodev.sql.builder.SelectSqlBuilder;
 import cn.dinodev.sql.dialect.MysqlDialect;
 import cn.dinodev.sql.dialect.PostgreSQLDialect;
 import cn.dinodev.sql.naming.SnakeNamingConversition;

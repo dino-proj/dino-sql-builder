@@ -14,51 +14,28 @@ import cn.dinodev.sql.dialect.Dialect;
 import cn.dinodev.sql.dialect.MysqlDialect;
 
 /**
- * DELETE 和 UPDATE 语句构建器测试类。
+ * UPDATE 语句构建器测试类。
  * 
- * <p>测试 {@link DeleteSqlBuilder} 和 {@link UpdateSqlBuilder} 的基本功能，包括：
+ * <p>测试 {@link UpdateSqlBuilder} 的基本功能，包括：
  * <ul>
- *   <li>DELETE 语句构建</li>
  *   <li>UPDATE 语句构建</li>
+ *   <li>SET 子句</li>
  *   <li>WHERE 条件</li>
+ *   <li>表别名</li>
+ *   <li>条件设置方法</li>
  * </ul>
  * 
  * @author Cody Lu
- * @since 2026-01-03
+ * @since 2026-01-04
  */
-@DisplayName("DELETE和UPDATE构建器测试")
-public class DeleteUpdateBuilderTest {
+@DisplayName("UPDATE构建器测试")
+public class UpdateSqlBuilderTest {
 
   private Dialect dialect;
 
   @BeforeEach
   public void setUp() {
     dialect = new MysqlDialect(null, null);
-  }
-
-  @Test
-  @DisplayName("测试基础DELETE构建器")
-  void testBasicDeleteBuilder() {
-    DeleteSqlBuilder deleteBuilder = DeleteSqlBuilder.create(dialect, "users")
-        .where("age > ?", 18)
-        .and("status = ?", 1);
-
-    assertSqlWithParams(deleteBuilder, "基础DELETE",
-        "DELETE FROM users WHERE age > ? AND (status = ?)",
-        new Object[] { 18, 1 });
-    assertEquals(2, deleteBuilder.getParamCount());
-  }
-
-  @Test
-  @DisplayName("测试带别名的DELETE构建器")
-  void testDeleteBuilderWithAlias() {
-    DeleteSqlBuilder deleteBuilder = DeleteSqlBuilder.create(dialect, "users", "u")
-        .where("u.age > ?", 30)
-        .or("u.name = ?", "John");
-
-    assertSqlWithParams(deleteBuilder, "带别名的DELETE",
-        "DELETE FROM users AS u WHERE u.age > ? OR (u.name = ?)",
-        new Object[] { 30, "John" });
   }
 
   @Test
