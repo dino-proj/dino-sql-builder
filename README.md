@@ -33,14 +33,14 @@ Dino Sql Builder 是一个轻量级、类型安全的 Java SQL 构建工具，�
 <dependency>
   <groupId>cn.dinodev</groupId>
   <artifactId>dino-sql-builder</artifactId>
-  <version>2.1</version>
+  <version>3.0</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```gradle
-implementation 'cn.dinodev:dino-sql-builder:2.1'
+implementation 'cn.dinodev:dino-sql-builder:3.0'
 ```
 
 ---

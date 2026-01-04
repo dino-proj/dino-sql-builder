@@ -39,7 +39,7 @@ jobs:
 
     env:
       MVN_OPT: '--errors --no-transfer-progress --batch-mode'
-      BUILD_OPT: '-Dmaven.test.skip=true -P publish'
+      BUILD_OPT: '-P publish'
       MVN_NEXUS_USERNAME: ${{ secrets.NEXUS_USERNAME }}
       MVN_NEXUS_PASSWORD: ${{ secrets.NEXUS_PASSWORD }}
       AUTO_PUBLISH: ${{ github.event.inputs.autoPublish || true }}
