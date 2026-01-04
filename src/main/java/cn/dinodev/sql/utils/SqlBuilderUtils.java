@@ -5,6 +5,8 @@ package cn.dinodev.sql.utils;
 
 import java.util.List;
 
+import cn.dinodev.sql.Oper;
+
 /**
  * SQL 构建工具接口。
  * <p>
@@ -82,6 +84,30 @@ public final class SqlBuilderUtils {
       idx++;
     }
     expr.append(postFix);
+
+    return expr.toString();
+  }
+
+  /**
+   * 生成有 n 个参数的表达式，主要用于 IN/NOT IN 语句。
+   * 
+   * @param column 列名
+   * @param op 操作符（IN/NOT IN）
+   * @param nCount 参数数量
+   * @return 构造好的 SQL 片段
+   */
+  public static String makeNParamExprForOper(final String column, final Oper op, final int nCount) {
+    final StringBuilder expr = new StringBuilder();
+    int idx = 0;
+
+    while (idx < nCount) {
+      if (idx != 0) {
+        expr.append(", ");
+      }
+      expr.append('?');
+      idx++;
+    }
+    op.makeExpr(column, expr.toString());
 
     return expr.toString();
   }
