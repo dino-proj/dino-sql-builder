@@ -34,7 +34,7 @@ mvn install
 echo "change version in README.md"
 cd "$CWD/.."
 # Update Maven dependency version
-sed -i '' -E '/<parent>/,/<\/parent>/ s/(<version>)[^<]+(<\/version>)/\1'"$NEW_VER"'\2/' README.md
+sed -i '' -E '/dino-sql-builder<\/artifactId>/{ n; s/(<version>)[^<]+(<\/version>)/\1'"$NEW_VER"'\2/; }' README.md
 # Update Gradle dependency version
 sed -i '' -E "s/(implementation 'cn\.dinodev:dino-sql-builder:)[0-9.]+'/\1$NEW_VER'/" README.md
 
