@@ -28,7 +28,7 @@ fi
 NEW_VER=$1
 
 mvn versions:set -DnewVersion=${NEW_VER} -DgenerateBackupPoms=false
-mvn install -DskipTests
+mvn install 
 
 # change version in ./README.md
 echo "change version in README.md"
