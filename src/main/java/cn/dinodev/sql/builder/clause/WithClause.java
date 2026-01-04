@@ -6,6 +6,7 @@ package cn.dinodev.sql.builder.clause;
 import java.util.List;
 import java.util.stream.Stream;
 
+import cn.dinodev.sql.MaterializationHint;
 import cn.dinodev.sql.SqlBuilder;
 
 /**
@@ -19,27 +20,6 @@ import cn.dinodev.sql.SqlBuilder;
  * @since 2024-12-04
  */
 public interface WithClause<T extends SqlBuilder> extends ClauseSupport<T> {
-
-  /**
-   * CTE 物化提示（PostgreSQL 12+ 支持）。
-   * <p>
-   * 用于控制 CTE 的物化行为：
-   * <ul>
-   * <li>NONE - 不指定，由数据库优化器决定</li>
-   * <li>MATERIALIZED - 强制物化 CTE，将结果集缓存</li>
-   * <li>NOT_MATERIALIZED - 禁止物化，CTE 将内联到主查询</li>
-   * </ul>
-   * 
-   * @since 2024-12-31
-   */
-  enum MaterializationHint {
-    /** 不指定物化提示 */
-    NONE,
-    /** 强制物化（MATERIALIZED） */
-    MATERIALIZED,
-    /** 禁止物化（NOT MATERIALIZED） */
-    NOT_MATERIALIZED
-  }
 
   /**
    * 获取内部的 WITH 持有者。
