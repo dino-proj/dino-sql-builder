@@ -25,4 +25,10 @@ public interface SqlBuilder {
    */
   Object[] getParams();
 
+  /**
+   * 获取 SQL 参数的个数。
+   * @return 参数个数
+   */
+  int getParamCount();
+
 }
