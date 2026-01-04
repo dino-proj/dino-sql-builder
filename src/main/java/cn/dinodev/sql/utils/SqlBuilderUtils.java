@@ -107,8 +107,7 @@ public final class SqlBuilderUtils {
       expr.append('?');
       idx++;
     }
-    op.makeExpr(column, expr.toString());
 
-    return expr.toString();
+    return op.makeExpr(column, expr.toString());
   }
 }
