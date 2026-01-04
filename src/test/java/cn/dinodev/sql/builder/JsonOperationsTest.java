@@ -3,6 +3,8 @@
 
 package cn.dinodev.sql.builder;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,11 +40,11 @@ class JsonOperationsTest {
   // ==================== PostgreSQL JSONB 测试 ====================
 
   @Test
-  @DisplayName("PostgreSQL: 使用 json 方法 - 合并操作")
+  @DisplayName("PostgreSQL: 使用 jsonb 方法 - 合并操作")
   void testPostgresJsonMerge() {
     UpdateSqlBuilder builder = UpdateSqlBuilder.create(postgresDialect, "users");
 
-    builder.json("settings", ops -> ops
+    builder.jsonb("settings", ops -> ops
         .merge("{\"theme\":\"dark\"}")
         .setPath("{notifications,email}", true)
         .removeKey("deprecated"))
@@ -83,11 +85,58 @@ class JsonOperationsTest {
   void testPostgresSetPath() {
     UpdateSqlBuilder builder = UpdateSqlBuilder.create(postgresDialect, "users");
 
-    builder.json("settings", ops -> ops
+    builder.jsonb("settings", ops -> ops
         .setPath("{notifications,email}", true))
         .where("id", 1);
 
     System.out.println("PostgreSQL SQL: " + builder.getSql());
+  }
+
+  // ==================== PostgreSQL JSON 类型异常测试 ====================
+
+  @Test
+  @DisplayName("PostgreSQL: JSON 类型不支持 merge 操作")
+  void testPostgresJsonMergeNotSupported() {
+    UpdateSqlBuilder builder = UpdateSqlBuilder.create(postgresDialect, "users");
+
+    UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
+      builder.json("settings", ops -> ops
+          .merge("{\"theme\":\"dark\"}"))
+          .where("id", 1);
+      builder.getSql(); // 触发操作执行
+    });
+
+    System.out.println("预期异常: " + exception.getMessage());
+  }
+
+  @Test
+  @DisplayName("PostgreSQL: JSON 类型不支持 setPath 操作")
+  void testPostgresJsonSetPathNotSupported() {
+    UpdateSqlBuilder builder = UpdateSqlBuilder.create(postgresDialect, "users");
+
+    UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
+      builder.json("settings", ops -> ops
+          .setPath("{notifications,email}", true))
+          .where("id", 1);
+      builder.getSql(); // 触发操作执行
+    });
+
+    System.out.println("预期异常: " + exception.getMessage());
+  }
+
+  @Test
+  @DisplayName("PostgreSQL: JSON 类型不支持数组操作")
+  void testPostgresJsonArrayOperationNotSupported() {
+    UpdateSqlBuilder builder = UpdateSqlBuilder.create(postgresDialect, "users");
+
+    UnsupportedOperationException exception = assertThrows(UnsupportedOperationException.class, () -> {
+      builder.json("tags", ops -> ops
+          .appendArray("'new_tag'"))
+          .where("id", 1);
+      builder.getSql(); // 触发操作执行
+    });
+
+    System.out.println("预期异常: " + exception.getMessage());
   }
 
   // ==================== MySQL JSON 测试 ====================
