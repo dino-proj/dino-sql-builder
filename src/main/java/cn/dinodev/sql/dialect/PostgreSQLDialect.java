@@ -301,30 +301,16 @@ public class PostgreSQLDialect implements Dialect {
   }
 
   /**
-   * PostgreSQL JSON 类型转换表达式。
+   * 返回 JSON 操作方言实例。
    * <p>
-   * PostgreSQL 需要显式将参数转换为 JSON 类型。
+   * 返回 PostgreSQL 专用的 JsonDialect 实现。
    * 
-   * @return JSON 类型转换表达式: ?::json
+   * @return PostgreSQL JSON 方言实例
    * @since 2026-01-04
    */
   @Override
-  public String makeJsonTypeCast() {
-    return "?::json";
-  }
-
-  /**
-   * PostgreSQL JSONB 类型转换表达式。
-   * <p>
-   * PostgreSQL 需要显式将参数转换为 JSONB 类型。
-   * JSONB 是 PostgreSQL 特有的二进制 JSON 格式，提供更高效的查询性能。
-   * 
-   * @return JSONB 类型转换表达式: ?::jsonb
-   * @since 2026-01-04
-   */
-  @Override
-  public String makeJsonbTypeCast() {
-    return "?::jsonb";
+  public JsonDialect jsonDialect() {
+    return PostgreSQLJsonDialect.getInstance();
   }
 
 }

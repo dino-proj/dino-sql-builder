@@ -154,4 +154,17 @@ public class MysqlDialect implements Dialect {
   public String makeNotRegexpExpr(String column) {
     return column + " NOT REGEXP ?";
   }
+
+  /**
+   * 返回 JSON 操作方言实例。
+   * <p>
+   * 返回 MySQL 专用的 JsonDialect 实现。
+   * 
+   * @return MySQL JSON 方言实例
+   * @since 2026-01-04
+   */
+  @Override
+  public JsonDialect jsonDialect() {
+    return MysqlJsonDialect.getInstance();
+  }
 }

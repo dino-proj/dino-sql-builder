@@ -10,7 +10,6 @@ import java.util.Locale;
 
 import cn.dinodev.sql.naming.NamingConversition;
 import cn.dinodev.sql.naming.SnakeNamingConversition;
-import cn.dinodev.sql.utils.StringUtils;
 
 /**
  * 数据库方言接口。
@@ -211,45 +210,17 @@ public interface Dialect {
     return "?";
   }
 
-  /**
-   * 生成 JSON 类型转换表达式。
-   * <p>
-   * 不同数据库的 JSON 类型转换：
-   * <ul>
-   *   <li><b>MySQL 5.7+</b>: ? (直接使用占位符，MySQL 会自动处理 JSON 类型)</li>
-   *   <li><b>PostgreSQL</b>: ?::json (需要显式类型转换)</li>
-   * </ul>
-   * 
-   * @return JSON 类型转换表达式
-   * @since 2026-01-04
-   */
-  default String makeJsonTypeCast() {
-    return "?";
-  }
+  // ==================== JSON/JSONB 操作 ====================
 
   /**
-   * 生成 JSONB 类型转换表达式。
+   * 获取 JSON 操作方言。
    * <p>
-   * JSONB 是 PostgreSQL 特有的二进制 JSON 类型：
-   * <ul>
-   *   <li><b>MySQL</b>: ? (MySQL 不支持 JSONB，使用 JSON 类型)</li>
-   *   <li><b>PostgreSQL</b>: ?::jsonb (需要显式类型转换)</li>
-   * </ul>
+   * 返回处理 JSON/JSONB 操作的方言实例，用于生成数据库特定的 JSON SQL。
    * 
-   * @return JSONB 类型转换表达式
+   * @return JSON 操作方言实例
    * @since 2026-01-04
    */
-  default String makeJsonbTypeCast() {
-    return "?";
-  }
-
-  /**
-   * 返回默认的 Dialect 实现
-   * @return 默认方言实例
-   */
-  static Dialect ofDefault() {
-    return Default.INST_DEFAULT;
-  }
+  JsonDialect jsonDialect();
 
   /**
    * 根据数据库连接自动识别并返回对应的 Dialect 实现
@@ -274,121 +245,4 @@ public interface Dialect {
     return dialect;
   }
 
-  /**
-   * 默认数据库方言实现
-   */
-  class Default implements Dialect {
-
-    private static final Default INST_DEFAULT = new Default();
-
-    /**
-     * 默认构造函数。
-     * 创建默认数据库方言实现实例。
-     */
-    public Default() {
-    }
-
-    /**
-     * 生成 LIMIT/OFFSET 语句
-     * @param limit 限制条数
-     * @param offset 偏移量
-     * @return SQL 片段
-     */
-    @Override
-    public String limitOffset(int limit, long offset) {
-      if (limit > 0) {
-        return offset > 0 ? "LIMIT " + limit + " OFFSET " + offset : "LIMIT " + limit;
-      }
-      return "";
-    }
-
-    /**
-     * 获取方言名称
-     */
-    @Override
-    public String getDialectName() {
-      return "default";
-    }
-
-    /**
-     * 字段名加引号（防止关键字冲突）
-     */
-    @Override
-    public String quoteColumnName(String columnName) {
-      return StringUtils.wrapIfMissing(columnName, '"');
-    }
-
-    /**
-     * 获取当前 schema 的 SQL，默认不支持
-     */
-    @Override
-    public String getCurrentSchemaSql() {
-      throw new UnsupportedOperationException();
-    }
-
-    /**
-     * 检查兼容性，默认始终返回 true
-     */
-    @Override
-    public boolean isCompatible(DatabaseMetaData metaData) {
-      return true;
-    }
-
-    /**
-     * 默认不支持 UUID 查询
-     */
-    @Override
-    public String getSelectUUIDSql() {
-      throw new UnsupportedOperationException();
-    }
-
-    /**
-     * 默认不支持 sequence 查询
-     */
-    @Override
-    public String getSequenceNextValSql(String sequenceName) {
-      throw new UnsupportedOperationException();
-    }
-
-    /**
-     * 默认不支持 sequence
-     */
-    @Override
-    public boolean supportSequence() {
-      return false;
-    }
-
-    /**
-     * 表名加引号（防止关键字冲突）
-     */
-    @Override
-    public String quoteTableName(String name) {
-      return StringUtils.wrapIfMissing(name, '"');
-    }
-
-    /**
-     * 获取默认命名转换器
-     */
-    @Override
-    public NamingConversition namingConversition() {
-      return NamingConversition.Nop.INST;
-    }
-
-    /**
-     * 默认不支持 UUID
-     */
-    @Override
-    public boolean supportUUID() {
-      return false;
-    }
-
-    /**
-     * 默认不支持 UUID 函数
-     */
-    @Override
-    public String getUuidFunction() {
-      throw new UnsupportedOperationException();
-    }
-
-  }
 }
