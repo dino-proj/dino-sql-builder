@@ -15,6 +15,7 @@ import cn.dinodev.sql.builder.clause.WithClause;
 import cn.dinodev.sql.builder.clause.wheres.WhereClauseSupport;
 import cn.dinodev.sql.dialect.Dialect;
 import cn.dinodev.sql.dialect.MysqlDialect;
+import cn.dinodev.sql.utils.SqlBuilderUtils;
 
 /**
  * SQL UPDATE语句构建器。

@@ -1,7 +1,7 @@
 // Copyright 2025 dinosdev.cn.
 // SPDX-License-Identifier: Apache-2.0
 
-package cn.dinodev.sql.builder;
+package cn.dinodev.sql.utils;
 
 import java.util.List;
 

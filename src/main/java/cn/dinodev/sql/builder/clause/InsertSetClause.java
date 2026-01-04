@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import cn.dinodev.sql.SqlBuilder;
-import cn.dinodev.sql.builder.SqlBuilderUtils;
+import cn.dinodev.sql.utils.SqlBuilderUtils;
 
 /**
  * INSERT 子句接口，提供插入数据相关的方法。
