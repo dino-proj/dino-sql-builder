@@ -3,6 +3,7 @@
 
 package cn.dinodev.sql.dialect;
 
+import cn.dinodev.sql.JsonPath;
 import cn.dinodev.sql.JsonType;
 
 /**
@@ -84,6 +85,42 @@ public class MysqlJsonDialect implements JsonDialect {
   }
 
   /**
+   * 将 JsonPath 转换为 MySQL 路径格式。
+   * <p>
+   * MySQL 使用 $ 开头的点分隔和数组索引格式：$.key1.key2[0].key3
+   * <p>
+   * 使用示例：
+   * <pre>{@code
+   * JsonPath path = JsonPath.of("users", 0, "name");
+   * String mysqlPath = formatPath(path);  // $.users[0].name
+   * }</pre>
+   * 
+   * @param path JSON 路径对象
+   * @return MySQL 路径格式字符串
+   * @since 2026-01-04
+   */
+  @Override
+  public String formatPath(JsonPath path) {
+    if (path.isEmpty()) {
+      return "$";
+    }
+
+    StringBuilder pathSb = new StringBuilder("$");
+    for (Object segment : path.getSegments()) {
+      if (segment instanceof String) {
+        pathSb.append(".").append((String) segment);
+      } else if (segment instanceof Integer) {
+        pathSb.append("[").append(segment).append("]");
+      } else {
+        throw new IllegalArgumentException(
+            "Path segment must be String or Integer, got: " +
+                (segment == null ? "null" : segment.getClass().getName()));
+      }
+    }
+    return pathSb.toString();
+  }
+
+  /**
    * MySQL JSON 合并表达式。
    * <p>
    * 使用 JSON_MERGE_PATCH 函数合并 JSON 对象，右侧的值会覆盖左侧相同的键。
@@ -100,21 +137,23 @@ public class MysqlJsonDialect implements JsonDialect {
   }
 
   /**
-   * MySQL JSON 路径设置表达式。
+   * MySQL JSON 路径设置表达式（使用 JsonPath）。
    * <p>
    * 使用 JSON_SET 函数更新指定路径的值。
    * <p>
-   * <b>注意</b>: MySQL 的 JSON_SET 总是创建缺失的路径，createM issing 参数被忽略。
+   * <b>注意</b>: MySQL 的 JSON_SET 总是创建缺失的路径，createMissing 参数被忽略。
    * 
    * @param type JSON 数据类型（MySQL 忽略此参数）
    * @param column 列名或表达式
-   * @param path JSON 路径（MySQL 格式：$.a.b.c）
+   * @param path JSON 路径对象
    * @param createMissing 是否创建缺失的路径（MySQL JSON_SET 总是创建）
    * @return JSON_SET(column, '$.path', ?)
+   * @since 2026-01-04
    */
   @Override
-  public String makeJsonSetPath(JsonType type, String column, String path, boolean createMissing) {
-    return "JSON_SET(" + column + ", '" + path + "', " + makeTypeCast(type) + ")";
+  public String makeJsonSetPath(JsonType type, String column, JsonPath path, boolean createMissing) {
+    String mysqlPath = formatPath(path);
+    return "JSON_SET(" + column + ", '" + mysqlPath + "', " + makeTypeCast(type) + ")";
   }
 
   /**
@@ -154,17 +193,20 @@ public class MysqlJsonDialect implements JsonDialect {
   }
 
   /**
-   * MySQL JSON 删除路径表达式。
+   * 删除 JSON 路径表达式（使用 JsonPath）。
    * <p>
    * 使用 JSON_REMOVE 函数删除指定路径。
    * 
+   * @param type JSON 数据类型（MySQL 不区分 JSON 和 JSONB）
    * @param column 列名或表达式
-   * @param path JSON 路径（MySQL 格式：$.a.b.c）
+   * @param path JSON 路径对象
    * @return JSON_REMOVE(column, '$.path')
+   * @since 2026-01-04
    */
   @Override
-  public String makeJsonRemovePath(String column, String path) {
-    return "JSON_REMOVE(" + column + ", '" + path + "')";
+  public String makeJsonRemovePath(JsonType type, String column, JsonPath path) {
+    String mysqlPath = formatPath(path);
+    return "JSON_REMOVE(" + column + ", '" + mysqlPath + "')";
   }
 
   /**
@@ -210,42 +252,6 @@ public class MysqlJsonDialect implements JsonDialect {
     throw new UnsupportedOperationException(
         "MySQL does not support JSON strip nulls operation natively, " +
             "you need to implement a custom function or handle it in application layer");
-  }
-
-  /**
-   * 构建 MySQL 混合路径（支持键和数组索引混合）。
-   * <p>
-   * 示例：
-   * <ul>
-   *   <li>"a", "b", "c" -> "$.a.b.c"</li>
-   *   <li>0 -> "$[0]"</li>
-   *   <li>"users", 0, "name" -> "$.users[0].name"</li>
-   *   <li>"data", "items", 2, "tags", 0 -> "$.data.items[2].tags[0]"</li>
-   * </ul>
-   * 
-   * @param segments 路径段序列，可以是字符串（键）或整数（数组索引）
-   * @return MySQL 路径字符串
-   * @throws IllegalArgumentException 如果传入的类型不是 String 或 Integer
-   */
-  @Override
-  public String makePath(Object... segments) {
-    if (segments == null || segments.length == 0) {
-      return "$";
-    }
-
-    StringBuilder path = new StringBuilder("$");
-    for (Object segment : segments) {
-      if (segment instanceof String) {
-        path.append(".").append((String) segment);
-      } else if (segment instanceof Integer) {
-        path.append("[").append(segment).append("]");
-      } else {
-        throw new IllegalArgumentException(
-            "Path segment must be String or Integer, got: " +
-                (segment == null ? "null" : segment.getClass().getName()));
-      }
-    }
-    return path.toString();
   }
 
 }

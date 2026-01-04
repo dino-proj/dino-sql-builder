@@ -3,6 +3,7 @@
 
 package cn.dinodev.sql.dialect;
 
+import cn.dinodev.sql.JsonPath;
 import cn.dinodev.sql.JsonType;
 
 /**
@@ -85,6 +86,50 @@ public class PostgreSQLJsonDialect implements JsonDialect {
   }
 
   /**
+   * 将 JsonPath 转换为 PostgreSQL 路径格式。
+   * <p>
+   * PostgreSQL 使用花括号和逗号分隔的路径格式：{key1,key2,0,key3}
+   * <p>
+   * 使用示例：
+   * <pre>{@code
+   * JsonPath path = JsonPath.of("users", 0, "name");
+   * String pgPath = formatPath(path);  // {users,0,name}
+   * }</pre>
+   * 
+   * @param path JSON 路径对象
+   * @return PostgreSQL 路径格式字符串
+   * @since 2026-01-04
+   */
+  @Override
+  public String formatPath(JsonPath path) {
+    if (path.isEmpty()) {
+      return "{}";
+    }
+
+    var segments = path.getSegments();
+    StringBuilder pathSb = new StringBuilder("{");
+    for (int i = 0; i < segments.size(); i++) {
+      if (i > 0) {
+        pathSb.append(",");
+      }
+
+      Object segment = segments.get(i);
+      if (segment instanceof String) {
+        pathSb.append((String) segment);
+      } else if (segment instanceof Integer) {
+        pathSb.append(segment);
+      } else {
+        throw new IllegalArgumentException(
+            "Path segment must be String or Integer, got: " +
+                (segment == null ? "null" : segment.getClass().getName()));
+      }
+    }
+    pathSb.append("}");
+    return pathSb.toString();
+
+  }
+
+  /**
    * PostgreSQL JSON 合并表达式。
    * <p>
    * 使用 || 运算符合并 JSONB 对象，右侧的值会覆盖左侧相同的键。
@@ -115,17 +160,20 @@ public class PostgreSQLJsonDialect implements JsonDialect {
    * @param type JSON 数据类型
    * @param column 列名或表达式
    * @param path JSON 路径（PostgreSQL 格式：{a,b,c}）
+   * @param path JSON 路径对象
    * @param createMissing 是否创建缺失的路径
    * @return jsonb_set(column, '{path}', ?::jsonb, createMissing)
    * @throws UnsupportedOperationException 当使用 JSON 类型时
+   * @since 2026-01-04
    */
   @Override
-  public String makeJsonSetPath(JsonType type, String column, String path, boolean createMissing) {
+  public String makeJsonSetPath(JsonType type, String column, JsonPath path, boolean createMissing) {
     if (type == JsonType.JSON) {
       throw new UnsupportedOperationException(
           "PostgreSQL JSON type does not support path operations, use JSONB instead");
     }
-    return "jsonb_set(" + column + ", '" + path + "', " + makeTypeCast(type) + ", " + createMissing + ")";
+    String pgPath = formatPath(path);
+    return "jsonb_set(" + column + ", '" + pgPath + "', " + makeTypeCast(type) + ", " + createMissing + ")";
   }
 
   /**
@@ -167,17 +215,25 @@ public class PostgreSQLJsonDialect implements JsonDialect {
   }
 
   /**
-   * PostgreSQL JSON 删除路径表达式。
+   * PostgreSQL JSON 删除路径表达式（使用 JsonPath）。
    * <p>
    * 使用 #- 运算符删除指定路径。
    * 
+   * @param type JSON 数据类型
    * @param column 列名或表达式
-   * @param path JSON 路径（PostgreSQL 格式：{a,b,c}）
+   * @param path JSON 路径对象
    * @return column #- '{path}'
+   * @throws UnsupportedOperationException 当使用 JSON 类型时
+   * @since 2026-01-04
    */
   @Override
-  public String makeJsonRemovePath(String column, String path) {
-    return column + " #- '" + path + "'";
+  public String makeJsonRemovePath(JsonType type, String column, JsonPath path) {
+    if (type == JsonType.JSON) {
+      throw new UnsupportedOperationException(
+          "PostgreSQL JSON type does not support path operations, use JSONB instead");
+    }
+    String pgPath = formatPath(path);
+    return column + " #- '" + pgPath + "'";
   }
 
   /**
@@ -241,48 +297,6 @@ public class PostgreSQLJsonDialect implements JsonDialect {
       case JSON -> "json_strip_nulls(" + column + ")";
       case JSONB -> "jsonb_strip_nulls(" + column + ")";
     };
-  }
-
-  /**
-   * 构建 PostgreSQL 混合路径（支持键和数组索引混合）。
-   * <p>
-   * 示例：
-   * <ul>
-   *   <li>"a", "b", "c" -> "{a,b,c}"</li>
-   *   <li>0 -> "{0}"</li>
-   *   <li>"users", 0, "name" -> "{users,0,name}"</li>
-   *   <li>"data", "items", 2, "tags", 0 -> "{data,items,2,tags,0}"</li>
-   * </ul>
-   * 
-   * @param segments 路径段序列，可以是字符串（键）或整数（数组索引）
-   * @return PostgreSQL 路径字符串
-   * @throws IllegalArgumentException 如果传入的类型不是 String 或 Integer
-   */
-  @Override
-  public String makePath(Object... segments) {
-    if (segments == null || segments.length == 0) {
-      return "{}";
-    }
-
-    StringBuilder path = new StringBuilder("{");
-    for (int i = 0; i < segments.length; i++) {
-      if (i > 0) {
-        path.append(",");
-      }
-
-      Object segment = segments[i];
-      if (segment instanceof String) {
-        path.append((String) segment);
-      } else if (segment instanceof Integer) {
-        path.append(segment);
-      } else {
-        throw new IllegalArgumentException(
-            "Path segment must be String or Integer, got: " +
-                (segment == null ? "null" : segment.getClass().getName()));
-      }
-    }
-    path.append("}");
-    return path.toString();
   }
 
 }

@@ -3,6 +3,7 @@
 
 package cn.dinodev.sql.dialect;
 
+import cn.dinodev.sql.JsonPath;
 import cn.dinodev.sql.JsonType;
 
 /**
@@ -65,26 +66,47 @@ public interface JsonDialect {
   String makeTypeCast(JsonType type);
 
   /**
+   * 将 JsonPath 转换为数据库特定的路径字符串格式。
+   * <p>
+   * 不同数据库实现：
+   * <ul>
+   *   <li><b>PostgreSQL</b>: {key1,key2,0,key3}</li>
+   *   <li><b>MySQL</b>: $.key1.key2[0].key3</li>
+   * </ul>
+   * <p>
+   * 使用示例：
+   * <pre>{@code
+   * JsonPath path = JsonPath.of("users", 0, "name");
+   * String pgPath = postgresDialect.formatPath(path);    // {users,0,name}
+   * String mysqlPath = mysqlDialect.formatPath(path);    // $.users[0].name
+   * }</pre>
+   * 
+   * @param path JSON 路径对象
+   * @return 数据库特定的路径字符串
+   * @since 2026-01-04
+   */
+  String formatPath(JsonPath path);
+
+  /**
    * 生成 JSON 合并表达式。
    * <p>
    * 不同数据库的实现：
    * <ul>
-   *   <li><b>PostgreSQL + JSON</b>: 不支持（JSON 类型不支持操作符）</li>
+   *   <li><b>PostgreSQL + JSON</b>: 不支持（需使用 JSONB）</li>
    *   <li><b>PostgreSQL + JSONB</b>: column || ?::jsonb</li>
    *   <li><b>MySQL</b>: JSON_MERGE_PATCH(column, ?)</li>
    * </ul>
-   * <p>
-   * <b>注意</b>: PostgreSQL 的 JSON 类型（非 JSONB）不支持合并操作，调用时会抛出异常。
    * 
    * @param type JSON 数据类型
    * @param column 列名或表达式
    * @return JSON 合并表达式
    * @throws UnsupportedOperationException 当数据库不支持指定类型的合并操作时
+   * @since 2026-01-04
    */
   String makeJsonMerge(JsonType type, String column);
 
   /**
-   * 生成 JSON 路径设置表达式。
+   * 生成设置 JSON 路径的 SQL 表达式（使用 JsonPath）。
    * <p>
    * 不同数据库的实现：
    * <ul>
@@ -93,22 +115,17 @@ public interface JsonDialect {
    *   <li><b>MySQL</b>: JSON_SET(column, '$.a.b.c', ?)</li>
    * </ul>
    * <p>
-   * 路径格式：
-   * <ul>
-   *   <li><b>PostgreSQL</b>: "{a,b,c}" 或 "{users,0,name}"（数组索引用数字）</li>
-   *   <li><b>MySQL</b>: "$.a.b.c" 或 "$.users[0].name"</li>
-   * </ul>
-   * <p>
    * <b>注意</b>: PostgreSQL 的 JSON 类型不支持路径设置，必须使用 JSONB。
    * 
    * @param type JSON 数据类型
    * @param column 列名或表达式
-   * @param path JSON 路径字符串（格式由具体方言定义）
+   * @param path JSON 路径对象
    * @param createMissing 是否创建缺失的路径（MySQL 总是创建，此参数仅对 PostgreSQL 有效）
    * @return JSON 路径设置表达式
    * @throws UnsupportedOperationException 当数据库不支持指定类型的路径设置操作时
+   * @since 2026-01-04
    */
-  String makeJsonSetPath(JsonType type, String column, String path, boolean createMissing);
+  String makeJsonSetPath(JsonType type, String column, JsonPath path, boolean createMissing);
 
   /**
    * 生成 JSON 删除键表达式。
@@ -147,28 +164,23 @@ public interface JsonDialect {
   }
 
   /**
-   * 生成 JSON 删除路径表达式。
+   * 生成 JSON 删除路径表达式（使用 JsonPath）。
    * <p>
    * 不同数据库的实现：
    * <ul>
-   *   <li><b>PostgreSQL</b>: column #- '{a,b,c}'</li>
+   *   <li><b>PostgreSQL + JSON</b>: 不支持（需使用 JSONB）</li>
+   *   <li><b>PostgreSQL + JSONB</b>: column #- '{a,b,c}'</li>
    *   <li><b>MySQL</b>: JSON_REMOVE(column, '$.a.b.c')</li>
    * </ul>
-   * <p>
-   * 路径格式：
-   * <ul>
-   *   <li><b>PostgreSQL</b>: "{a,b,c}" 或 "{users,0,name}"</li>
-   *   <li><b>MySQL</b>: "$.a.b.c" 或 "$.users[0].name"</li>
-   * </ul>
    * 
+   * @param type JSON 数据类型
    * @param column 列名或表达式
-   * @param path JSON 路径字符串（格式由具体方言定义）
+   * @param path JSON 路径对象
    * @return JSON 删除路径表达式
+   * @throws UnsupportedOperationException 当数据库不支持指定类型的路径删除操作时
+   * @since 2026-01-04
    */
-  default String makeJsonRemovePath(String column, String path) {
-    throw new UnsupportedOperationException(
-        getDialectName() + " does not support JSON path removal");
-  }
+  String makeJsonRemovePath(JsonType type, String column, JsonPath path);
 
   /**
    * 生成 JSON 数组追加表达式。
@@ -223,37 +235,4 @@ public interface JsonDialect {
    */
   String makeJsonStripNulls(JsonType type, String column);
 
-  // ==================== 路径构建辅助方法 ====================
-
-  /**
-   * 构建混合路径（支持键和数组索引混合）。
-   * <p>
-   * 接受字符串（键）和整数（数组索引）的混合序列。
-   * <p>
-   * 不同数据库的实现：
-   * <ul>
-   *   <li><b>PostgreSQL</b>: "users", 0, "name" -> "{users,0,name}"</li>
-   *   <li><b>MySQL</b>: "users", 0, "name" -> "$.users[0].name"</li>
-   * </ul>
-   * <p>
-   * 使用示例：
-   * <pre>{@code
-   * // 访问对象键
-   * String path1 = dialect.makePath("address", "city");  // {address,city} 或 $.address.city
-   * 
-   * // 访问数组索引
-   * String path2 = dialect.makePath(0);  // {0} 或 $[0]
-   * 
-   * // 混合访问：users 数组第一个元素的 name 字段
-   * String path3 = dialect.makePath("users", 0, "name");  // {users,0,name} 或 $.users[0].name
-   * 
-   * // 复杂嵌套：data.items[2].tags[0]
-   * String path4 = dialect.makePath("data", "items", 2, "tags", 0);
-   * }</pre>
-   * 
-   * @param segments 路径段序列，可以是字符串（键）或整数（数组索引）
-   * @return JSON 路径字符串
-   * @throws IllegalArgumentException 如果传入的类型不是 String 或 Integer
-   */
-  String makePath(Object... segments);
 }
