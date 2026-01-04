@@ -11,6 +11,7 @@ import cn.dinodev.sql.Logic;
 import cn.dinodev.sql.Oper;
 import cn.dinodev.sql.Range;
 import cn.dinodev.sql.SqlBuilder;
+import cn.dinodev.sql.utils.SqlBuilderUtils;
 
 /**
  * 范围查询 WHERE 子句接口，提供 IN、NOT IN、BETWEEN 等范围操作。
@@ -92,9 +93,9 @@ public interface RangeWhereClause<T extends SqlBuilder> extends WhereClauseSuppo
       return self();
     }
     if (values.size() == 1) {
-      appendWhere(logic, column + " = ?");
+      appendWhere(logic, Oper.EQ.makeExpr(column));
     } else {
-      appendWhere(logic, makeNParamExpr(column, "IN", values.size()));
+      appendWhere(logic, SqlBuilderUtils.makeNParamExprForOper(column, Oper.IN, values.size()));
     }
     innerWhereHolder().addParamsFromCollection(values);
     return self();
@@ -164,7 +165,7 @@ public interface RangeWhereClause<T extends SqlBuilder> extends WhereClauseSuppo
     if (values.size() == 1) {
       appendWhere(logic, Oper.NE.makeExpr(column));
     } else {
-      appendWhere(logic, makeNParamExpr(column, "NOT IN", values.size()));
+      appendWhere(logic, SqlBuilderUtils.makeNParamExprForOper(column, Oper.NOT_IN, values.size()));
     }
     innerWhereHolder().addParamsFromCollection(values);
     return self();
@@ -196,34 +197,10 @@ public interface RangeWhereClause<T extends SqlBuilder> extends WhereClauseSuppo
     if (values.length == 1) {
       appendWhere(logic, Oper.NE.makeExpr(column));
     } else {
-      appendWhere(logic, makeNParamExpr(column, "NOT IN", values.length));
+      appendWhere(logic, SqlBuilderUtils.makeNParamExprForOper(column, Oper.NOT_IN, values.length));
     }
     innerWhereHolder().addWhereParams(values);
     return self();
   }
 
-  /**
-   * 生成有 n 个参数的表达式，主要用于 IN/NOT IN 语句。
-   * 
-   * @param column 列名
-   * @param op 操作符（IN/NOT IN）
-   * @param nCount 参数数量
-   * @return 构造好的 SQL 片段
-   */
-  default String makeNParamExpr(final String column, final String op, final int nCount) {
-    final StringBuilder expr = new StringBuilder();
-    int idx = 0;
-    expr.append(column).append(' ').append(op).append(" (");
-
-    while (idx < nCount) {
-      if (idx != 0) {
-        expr.append(", ");
-      }
-      expr.append('?');
-      idx++;
-    }
-    expr.append(')');
-
-    return expr.toString();
-  }
 }
