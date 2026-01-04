@@ -3,10 +3,13 @@
 
 package cn.dinodev.sql.builder.clause;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
+import cn.dinodev.sql.JsonType;
 import cn.dinodev.sql.SqlBuilder;
 import cn.dinodev.sql.utils.SqlBuilderUtils;
 
@@ -214,7 +217,7 @@ public interface InsertSetClause<T extends SqlBuilder> extends ClauseSupport<T> 
    * @return 构建器本身
    */
   default T setJson(String column, Object value) {
-    return set(column, dialect().makeJsonTypeCast(), value);
+    return set(column, dialect().jsonDialect().makeTypeCast(JsonType.JSON), value);
   }
 
   /**
@@ -260,7 +263,7 @@ public interface InsertSetClause<T extends SqlBuilder> extends ClauseSupport<T> 
    * @return 构建器本身
    */
   default T setJsonb(String column, Object value) {
-    return set(column, dialect().makeJsonbTypeCast(), value);
+    return set(column, dialect().jsonDialect().makeTypeCast(JsonType.JSONB), value);
   }
 
   /**
@@ -381,8 +384,19 @@ public interface InsertSetClause<T extends SqlBuilder> extends ClauseSupport<T> 
 
     // 处理数组类型
     if (value.getClass().isArray()) {
-      elements = Arrays.asList((Object[]) value);
-
+      // 处理基本类型数组
+      Class<?> componentType = value.getClass().getComponentType();
+      if (componentType.isPrimitive()) {
+        int length = java.lang.reflect.Array.getLength(value);
+        List<Object> list = new ArrayList<>(length);
+        for (int i = 0; i < length; i++) {
+          list.add(java.lang.reflect.Array.get(value, i));
+        }
+        elements = list;
+      } else {
+        // 对象数组
+        elements = Arrays.asList((Object[]) value);
+      }
     }
     // 处理 Collection 类型
     else if (value instanceof java.util.Collection) {
