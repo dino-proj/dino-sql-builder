@@ -28,7 +28,22 @@ fi
 NEW_VER=$1
 
 mvn versions:set -DnewVersion=${NEW_VER} -DgenerateBackupPoms=false
+
+# 检查文档生成是否成功
+echo "build javadoc"
+mvn javadoc:javadoc
+if [ $? -ne 0 ]; then
+    echo "Javadoc generation failed. Aborting release."
+    exit 1
+fi
+
+# 测试本地安装
+echo "install to local maven repo"
 mvn install 
+if [ $? -ne 0 ]; then
+    echo "Maven install failed. Aborting release."
+    exit 1
+fi
 
 # change version in ./README.md
 echo "change version in README.md"
