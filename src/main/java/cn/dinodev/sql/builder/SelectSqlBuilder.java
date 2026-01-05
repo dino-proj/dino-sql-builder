@@ -30,7 +30,7 @@ import cn.dinodev.sql.dialect.Dialect;
  * <b>使用示例：</b>
  * <pre>
  * SelectSqlBuilderV2 builder = SelectSqlBuilderV2.create(dialect, "user")
- *     .column("id", "name", "age")
+ *     .columns("id", "name", "age")
  *     .eq("status", 1)
  *     .gt("age", 18)
  *     .orderBy("age", false)

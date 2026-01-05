@@ -378,7 +378,7 @@ public class ComparisonWhereClauseTest {
   @DisplayName("组合测试 - 多个比较条件")
   void testCombinedComparisons() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "products")
-        .column("id", "name", "price", "stock")
+        .columns("id", "name", "price", "stock")
         .eq("category", "electronics")
         .gte("price", 100)
         .lte("price", 500)

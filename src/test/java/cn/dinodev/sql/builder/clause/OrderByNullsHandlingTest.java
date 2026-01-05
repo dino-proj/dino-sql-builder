@@ -45,14 +45,14 @@ public class OrderByNullsHandlingTest {
         @DisplayName("测试NULLS FIRST/LAST排序")
         void testNullsOrder() {
                 SelectSqlBuilder builder1 = SelectSqlBuilder.create(postgresDialect, "products")
-                                .column("id", "name", "score")
+                                .columns("id", "name", "score")
                                 .orderByWithNullsOrder("score", false, NullsOrder.NULLS_LAST);
 
                 assertSql(builder1, "NULLS LAST排序",
                                 "SELECT id, name, score FROM products ORDER BY score DESC NULLS LAST");
 
                 SelectSqlBuilder builder2 = SelectSqlBuilder.create(postgresDialect, "products")
-                                .column("id", "name", "score", "rating")
+                                .columns("id", "name", "score", "rating")
                                 .orderByDescWithNullsOrder("score", NullsOrder.NULLS_LAST)
                                 .orderByAscWithNullsOrder("rating", NullsOrder.NULLS_FIRST);
 
@@ -64,7 +64,7 @@ public class OrderByNullsHandlingTest {
         @DisplayName("测试按位置编号排序")
         void testOrderByPosition() {
                 SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("name", "age", "score")
+                                .columns("name", "age", "score")
                                 .orderByPosition(3, false)
                                 .orderByPosition(1, true);
 
@@ -72,7 +72,7 @@ public class OrderByNullsHandlingTest {
                                 "SELECT name, age, score FROM users ORDER BY 3 DESC, 1 ASC");
 
                 SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("name", "age", "score", "status")
+                                .columns("name", "age", "score", "status")
                                 .orderByPositionDesc(3)
                                 .orderByPositionAsc(1, 2);
 
@@ -84,14 +84,14 @@ public class OrderByNullsHandlingTest {
         @DisplayName("测试COLLATE排序规则")
         void testOrderByCollate() {
                 SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .orderByWithCollate("name", true, "utf8mb4_unicode_ci");
 
                 assertSql(builder1, "MySQL COLLATE排序",
                                 "SELECT id, name FROM users ORDER BY name COLLATE utf8mb4_unicode_ci ASC");
 
                 SelectSqlBuilder builder2 = SelectSqlBuilder.create(postgresDialect, "users")
-                                .column("id", "title")
+                                .columns("id", "title")
                                 .orderByWithCollate("title", false, "en_US");
 
                 assertSql(builder2, "PostgreSQL COLLATE排序",
@@ -102,21 +102,21 @@ public class OrderByNullsHandlingTest {
         @DisplayName("测试表达式排序")
         void testOrderByExpression() {
                 SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name", "email")
+                                .columns("id", "name", "email")
                                 .orderBy("UPPER(name) ASC");
 
                 assertSql(builder1, "函数表达式排序",
                                 "SELECT id, name, email FROM users ORDER BY UPPER(name) ASC");
 
                 SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysqlDialect, "orders")
-                                .column("id", "price", "quantity")
+                                .columns("id", "price", "quantity")
                                 .orderBy("(price * quantity)", false);
 
                 assertSql(builder2, "计算表达式排序",
                                 "SELECT id, price, quantity FROM orders ORDER BY (price * quantity) DESC");
 
                 SelectSqlBuilder builder3 = SelectSqlBuilder.create(mysqlDialect, "tasks")
-                                .column("id", "title", "status")
+                                .columns("id", "title", "status")
                                 .orderBy("CASE WHEN status = 'urgent' THEN 1 WHEN status = 'high' THEN 2 ELSE 3 END ASC");
 
                 assertSql(builder3, "CASE表达式排序",
@@ -127,7 +127,7 @@ public class OrderByNullsHandlingTest {
         @DisplayName("测试复杂组合排序")
         void testComplexOrderBy() {
                 SelectSqlBuilder builder = SelectSqlBuilder.create(postgresDialect, "products")
-                                .column("id", "category", "name", "price", "rating", "stock")
+                                .columns("id", "category", "name", "price", "rating", "stock")
                                 .orderBy("category")
                                 .orderBy("LOWER(name)", true)
                                 .orderByWithNullsOrder("price", false, NullsOrder.NULLS_LAST)
@@ -142,7 +142,7 @@ public class OrderByNullsHandlingTest {
         void testOrderByAscDescIf() {
                 boolean sortByName = true;
                 SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name", "age")
+                                .columns("id", "name", "age")
                                 .orderByAscIf(sortByName, "name", "age")
                                 .orderByDesc("id");
 
@@ -151,7 +151,7 @@ public class OrderByNullsHandlingTest {
 
                 boolean sortByDate = false;
                 SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysqlDialect, "orders")
-                                .column("id", "amount", "created_at")
+                                .columns("id", "amount", "created_at")
                                 .orderByDescIf(sortByDate, "created_at")
                                 .orderByDesc("amount");
 
@@ -160,7 +160,7 @@ public class OrderByNullsHandlingTest {
 
                 boolean hasScore = true;
                 SelectSqlBuilder builder3 = SelectSqlBuilder.create(postgresDialect, "students")
-                                .column("id", "name", "score")
+                                .columns("id", "name", "score")
                                 .orderByAscIfWithNullsOrder(hasScore, NullsOrder.NULLS_LAST, "name")
                                 .orderByDescIfWithNullsOrder(hasScore, NullsOrder.NULLS_FIRST, "score");
 
@@ -169,7 +169,7 @@ public class OrderByNullsHandlingTest {
 
                 hasScore = false;
                 SelectSqlBuilder builder4 = SelectSqlBuilder.create(postgresDialect, "students")
-                                .column("id", "name", "score")
+                                .columns("id", "name", "score")
                                 .orderByAscIfWithNullsOrder(hasScore, NullsOrder.NULLS_LAST, "name")
                                 .orderByDescIfWithNullsOrder(hasScore, NullsOrder.NULLS_FIRST, "score")
                                 .orderBy("id");

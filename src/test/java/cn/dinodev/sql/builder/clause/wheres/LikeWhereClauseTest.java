@@ -189,7 +189,7 @@ public class LikeWhereClauseTest {
   void testSearchUsers() {
     String keyword = "test";
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "users")
-        .column("id", "name", "email", "phone")
+        .columns("id", "name", "email", "phone")
         .eq("status", 1)
         .some(new String[] { "name", "email", "phone" }, cn.dinodev.sql.Oper.LIKE, "%" + keyword + "%");
 

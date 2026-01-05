@@ -57,7 +57,7 @@ public class GroupByClauseTest {
   @DisplayName("基本 GROUP BY")
   void testBasicGroupBy() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-        .column("customer_id", "COUNT(*) AS order_count")
+        .columns("customer_id", "COUNT(*) AS order_count")
         .groupBy("customer_id");
 
     assertSql(builder, "基本 GROUP BY",
@@ -71,7 +71,7 @@ public class GroupByClauseTest {
   @DisplayName("多字段 GROUP BY")
   void testMultipleGroupBy() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-        .column("customer_id", "status", "COUNT(*) AS order_count")
+        .columns("customer_id", "status", "COUNT(*) AS order_count")
         .groupBy("customer_id", "status");
 
     assertSql(builder, "多字段 GROUP BY",
@@ -85,7 +85,7 @@ public class GroupByClauseTest {
   @DisplayName("逗号分隔的分组字段")
   void testGroupByWithCommaDelimited() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-        .column("customer_id", "status", "COUNT(*) AS order_count")
+        .columns("customer_id", "status", "COUNT(*) AS order_count")
         .groupBy("customer_id, status");
 
     assertSql(builder, "逗号分隔的分组字段",
@@ -99,7 +99,7 @@ public class GroupByClauseTest {
   @DisplayName("GROUP BY 表达式")
   void testGroupByWithExpression() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-        .column("DATE(created_at) AS order_date", "COUNT(*) AS order_count")
+        .columns("DATE(created_at) AS order_date", "COUNT(*) AS order_count")
         .groupBy("DATE(created_at)");
 
     assertSql(builder, "GROUP BY 表达式",
@@ -114,7 +114,7 @@ public class GroupByClauseTest {
   void testGroupByIf() {
     // 条件为真
     SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysql, "orders")
-        .column("customer_id", "COUNT(*) AS order_count")
+        .columns("customer_id", "COUNT(*) AS order_count")
         .groupByIf(true, "customer_id");
 
     assertSql(builder1, "条件 GROUP BY (true)",
@@ -122,7 +122,7 @@ public class GroupByClauseTest {
 
     // 条件为假
     SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysql, "orders")
-        .column("customer_id", "COUNT(*) AS order_count")
+        .columns("customer_id", "COUNT(*) AS order_count")
         .groupByIf(false, "customer_id");
 
     assertSql(builder2, "条件 GROUP BY (false)",
@@ -136,7 +136,7 @@ public class GroupByClauseTest {
   @DisplayName("GROUP BY ALL (PostgreSQL 17+)")
   void testGroupByAll() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(postgresql, "orders")
-        .column("customer_id", "status", "COUNT(*) AS order_count")
+        .columns("customer_id", "status", "COUNT(*) AS order_count")
         .groupByAll();
 
     assertSql(builder, "GROUP BY ALL (PostgreSQL 17+)",
@@ -145,7 +145,7 @@ public class GroupByClauseTest {
     // 测试不支持的方言
     assertThrows(UnsupportedOperationException.class, () -> {
       SelectSqlBuilder.create(mysql, "orders")
-          .column("customer_id", "COUNT(*) AS order_count")
+          .columns("customer_id", "COUNT(*) AS order_count")
           .groupByAll();
     });
   }
@@ -158,7 +158,7 @@ public class GroupByClauseTest {
   void testGroupByAllIf() {
     // 条件为真
     SelectSqlBuilder builder1 = SelectSqlBuilder.create(postgresql, "orders")
-        .column("customer_id", "status", "COUNT(*) AS order_count")
+        .columns("customer_id", "status", "COUNT(*) AS order_count")
         .groupByAllIf(true);
 
     assertSql(builder1, "条件 GROUP BY ALL (true)",
@@ -166,7 +166,7 @@ public class GroupByClauseTest {
 
     // 条件为假
     SelectSqlBuilder builder2 = SelectSqlBuilder.create(postgresql, "orders")
-        .column("customer_id", "status", "COUNT(*) AS order_count")
+        .columns("customer_id", "status", "COUNT(*) AS order_count")
         .groupByAllIf(false);
 
     assertSql(builder2, "条件 GROUP BY ALL (false)",
@@ -175,14 +175,14 @@ public class GroupByClauseTest {
     // 测试不支持的方言（条件为真时才抛出异常）
     assertThrows(UnsupportedOperationException.class, () -> {
       SelectSqlBuilder.create(mysql, "orders")
-          .column("customer_id", "COUNT(*) AS order_count")
+          .columns("customer_id", "COUNT(*) AS order_count")
           .groupByAllIf(true);
     });
 
     // 测试不支持的方言（条件为假时不抛出异常）
     assertDoesNotThrow(() -> {
       SelectSqlBuilder.create(mysql, "orders")
-          .column("customer_id", "COUNT(*) AS order_count")
+          .columns("customer_id", "COUNT(*) AS order_count")
           .groupByAllIf(false);
     });
   }
@@ -194,7 +194,7 @@ public class GroupByClauseTest {
   @DisplayName("GROUP BY 与 HAVING 结合")
   void testGroupByWithHaving() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-        .column("customer_id", "COUNT(*) AS order_count")
+        .columns("customer_id", "COUNT(*) AS order_count")
         .groupBy("customer_id")
         .having("COUNT(*) > 5");
 
@@ -209,7 +209,7 @@ public class GroupByClauseTest {
   @DisplayName("空 GROUP BY")
   void testEmptyGroupBy() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-        .column("customer_id", "COUNT(*) AS order_count");
+        .columns("customer_id", "COUNT(*) AS order_count");
 
     assertSql(builder, "空 GROUP BY",
         "SELECT customer_id, COUNT(*) AS order_count FROM orders");
@@ -222,7 +222,7 @@ public class GroupByClauseTest {
   @DisplayName("链式调用")
   void testChainability() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-        .column("customer_id", "status", "COUNT(*) AS order_count", "SUM(total) AS total_amount")
+        .columns("customer_id", "status", "COUNT(*) AS order_count", "SUM(total) AS total_amount")
         .groupBy("customer_id")
         .groupBy("status")
         .having("COUNT(*) > 5")
@@ -240,7 +240,7 @@ public class GroupByClauseTest {
   @DisplayName("异常场景 - 空字符串参数")
   public void testGroupByWithEmptyString() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-        .column("customer_id", "COUNT(*) AS cnt");
+        .columns("customer_id", "COUNT(*) AS cnt");
 
     // 空字符串应该被忽略或抛出异常，取决于实现
     assertDoesNotThrow(() -> builder.groupBy(""));
@@ -253,7 +253,7 @@ public class GroupByClauseTest {
   @DisplayName("异常场景 - null 参数")
   public void testGroupByWithNullString() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-        .column("customer_id", "COUNT(*) AS cnt");
+        .columns("customer_id", "COUNT(*) AS cnt");
 
     // null 参数应该被处理（忽略或抛出异常）
     assertDoesNotThrow(() -> builder.groupBy((String) null));
@@ -266,7 +266,7 @@ public class GroupByClauseTest {
   @DisplayName("边界场景 - 大量分组列")
   public void testGroupByWithManyColumns() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-        .column("col1", "col2", "col3", "col4", "col5", "col6", "col7", "col8", "col9", "col10")
+        .columns("col1", "col2", "col3", "col4", "col5", "col6", "col7", "col8", "col9", "col10")
         .groupBy("col1", "col2", "col3", "col4", "col5", "col6", "col7", "col8", "col9", "col10");
 
     String sql = builder.getSql();

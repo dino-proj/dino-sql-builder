@@ -43,7 +43,7 @@ public class JoinClauseTest {
   @DisplayName("测试INNER JOIN")
   void testInnerJoin() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "users", "u")
-        .column("u.id", "u.name", "o.order_id")
+        .columns("u.id", "u.name", "o.order_id")
         .innerJoin("orders", "o", "u.id = o.user_id");
 
     assertSql(builder, "INNER JOIN",
@@ -54,7 +54,7 @@ public class JoinClauseTest {
   @DisplayName("测试LEFT JOIN")
   void testLeftJoin() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "users", "u")
-        .column("u.id", "u.name", "o.order_id")
+        .columns("u.id", "u.name", "o.order_id")
         .leftJoin("orders", "o", "u.id = o.user_id");
 
     assertSql(builder, "LEFT JOIN",
@@ -65,7 +65,7 @@ public class JoinClauseTest {
   @DisplayName("测试RIGHT JOIN")
   void testRightJoin() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "users", "u")
-        .column("u.id", "u.name", "o.order_id")
+        .columns("u.id", "u.name", "o.order_id")
         .rightJoin("orders", "o", "u.id = o.user_id");
 
     assertSql(builder, "RIGHT JOIN",
@@ -76,7 +76,7 @@ public class JoinClauseTest {
   @DisplayName("测试多表JOIN")
   void testMultipleJoins() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "users", "u")
-        .column("u.id", "u.name", "o.order_id", "p.product_name")
+        .columns("u.id", "u.name", "o.order_id", "p.product_name")
         .innerJoin("orders", "o", "u.id = o.user_id")
         .leftJoin("products", "p", "o.product_id = p.id");
 
@@ -90,7 +90,7 @@ public class JoinClauseTest {
   @DisplayName("测试复杂ON条件")
   void testComplexJoinCondition() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "users", "u")
-        .column("u.id", "u.name", "o.order_id")
+        .columns("u.id", "u.name", "o.order_id")
         .innerJoin("orders", "o", "u.id = o.user_id AND o.status = 1");
 
     assertSql(builder, "复杂ON条件",

@@ -147,7 +147,7 @@ public class NullCheckWhereClauseTest {
   @DisplayName("实际场景 - 筛选活跃用户")
   void testActiveUsers() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "users")
-        .column("id", "name", "email")
+        .columns("id", "name", "email")
         .eq("status", 1)
         .isNull("deleted_at")
         .isNotNull("email")

@@ -61,7 +61,7 @@ public interface FromClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * 示例：
    * <pre>
    * SelectSqlBuilder subQuery = SelectSqlBuilder.create(dialect, "orders")
-   *     .column("customer_id", "SUM(amount) AS total")
+  *     .columns("customer_id", "SUM(amount) AS total")
    *     .groupBy("customer_id");
    * 
    * builder.fromSubQuery(subQuery, "order_totals");

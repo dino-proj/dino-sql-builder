@@ -35,7 +35,7 @@ public interface WithClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * 示例：
    * <pre>
    * SelectSqlBuilder cte = SelectSqlBuilder.create(dialect, "orders")
-   *     .column("customer_id", "SUM(amount) AS total")
+  *     .columns("customer_id", "SUM(amount) AS total")
    *     .groupBy("customer_id");
    * 
    * SelectSqlBuilder main = SelectSqlBuilder.create(dialect, "customers")

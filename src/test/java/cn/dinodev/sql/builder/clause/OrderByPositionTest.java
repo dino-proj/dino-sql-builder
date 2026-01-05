@@ -39,7 +39,7 @@ public class OrderByPositionTest {
   @DisplayName("测试基本位置排序")
   void testOrderByPosition() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysqlDialect, "users")
-        .column("name", "age", "score")
+        .columns("name", "age", "score")
         .orderByPosition(3, false)
         .orderByPosition(1, true);
 
@@ -51,7 +51,7 @@ public class OrderByPositionTest {
   @DisplayName("测试orderByPositionAsc升序排序")
   void testOrderByPositionAsc() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysqlDialect, "users")
-        .column("name", "age", "score", "status")
+        .columns("name", "age", "score", "status")
         .orderByPositionAsc(1, 2, 3);
 
     assertSql(builder, "orderByPositionAsc升序",
@@ -62,7 +62,7 @@ public class OrderByPositionTest {
   @DisplayName("测试orderByPositionDesc降序排序")
   void testOrderByPositionDesc() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysqlDialect, "products")
-        .column("id", "name", "price", "stock")
+        .columns("id", "name", "price", "stock")
         .orderByPositionDesc(3, 4);
 
     assertSql(builder, "orderByPositionDesc降序",
@@ -73,7 +73,7 @@ public class OrderByPositionTest {
   @DisplayName("测试混合位置排序")
   void testOrderByPositionMixed() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysqlDialect, "orders")
-        .column("id", "customer", "amount", "created_at")
+        .columns("id", "customer", "amount", "created_at")
         .orderByPositionDesc(3)
         .orderByPositionAsc(4, 1);
 

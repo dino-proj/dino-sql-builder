@@ -42,12 +42,12 @@ public class WithClauseTest {
     @DisplayName("测试单个CTE")
     void testSingleCte() {
         SelectSqlBuilder cte = SelectSqlBuilder.create(dialect, "orders")
-                .column("user_id", "SUM(amount) AS total")
+                .columns("user_id", "SUM(amount) AS total")
                 .groupBy("user_id");
 
         SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "user_totals")
                 .with("user_totals", cte)
-                .column("user_id", "total")
+                .columns("user_id", "total")
                 .where("total > ?", 1000);
 
         assertSql(builder, "单个CTE",
@@ -59,17 +59,17 @@ public class WithClauseTest {
     @DisplayName("测试多个CTE")
     void testMultipleCtes() {
         SelectSqlBuilder cte1 = SelectSqlBuilder.create(dialect, "orders")
-                .column("user_id", "COUNT(*) AS order_count")
+                .columns("user_id", "COUNT(*) AS order_count")
                 .groupBy("user_id");
 
         SelectSqlBuilder cte2 = SelectSqlBuilder.create(dialect, "payments")
-                .column("user_id", "SUM(amount) AS total_paid")
+                .columns("user_id", "SUM(amount) AS total_paid")
                 .groupBy("user_id");
 
         SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "user_orders", "uo")
                 .with("user_orders", cte1)
                 .with("user_payments", cte2)
-                .column("uo.user_id", "uo.order_count", "up.total_paid")
+                .columns("uo.user_id", "uo.order_count", "up.total_paid")
                 .innerJoin("user_payments", "up", "uo.user_id = up.user_id");
 
         assertSql(builder, "多个CTE",
@@ -86,7 +86,7 @@ public class WithClauseTest {
         // 递归查询示例：组织层级结构
         // 注：此处仅演示递归CTE的基本结构，实际使用中递归逻辑需要在SQL中定义
         SelectSqlBuilder recursiveBuilder = SelectSqlBuilder.create(dialect, "departments")
-                .column("id", "name", "parent_id", "1 AS level")
+                .columns("id", "name", "parent_id", "1 AS level")
                 .where("parent_id IS NULL");
 
         SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "org_hierarchy")

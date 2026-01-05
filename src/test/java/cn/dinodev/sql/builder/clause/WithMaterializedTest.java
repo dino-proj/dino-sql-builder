@@ -42,12 +42,12 @@ public class WithMaterializedTest {
                                 new SnakeNamingConversition());
 
                 SelectSqlBuilder cte = SelectSqlBuilder.create(pg12, "orders")
-                                .column("customer_id", "SUM(amount) AS total")
+                                .columns("customer_id", "SUM(amount) AS total")
                                 .groupBy("customer_id");
 
                 SelectSqlBuilder main = SelectSqlBuilder.create(pg12, "customers")
                                 .with("order_totals", cte, MaterializationHint.MATERIALIZED)
-                                .column("c.name", "ot.total")
+                                .columns("c.name", "ot.total")
                                 .join("order_totals", "ot", "customers.id = ot.customer_id");
 
                 assertSql(main, "PostgreSQL MATERIALIZED",
@@ -65,7 +65,7 @@ public class WithMaterializedTest {
                                 new SnakeNamingConversition());
 
                 SelectSqlBuilder cte = SelectSqlBuilder.create(pg12, "simple_table")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .eq("status", 1);
 
                 SelectSqlBuilder main = SelectSqlBuilder.create(pg12, "main_table")
@@ -88,7 +88,7 @@ public class WithMaterializedTest {
                                 new SnakeNamingConversition());
 
                 SelectSqlBuilder cte = SelectSqlBuilder.create(mysql, "orders")
-                                .column("customer_id", "SUM(amount) AS total")
+                                .columns("customer_id", "SUM(amount) AS total")
                                 .groupBy("customer_id");
 
                 SelectSqlBuilder main = SelectSqlBuilder.create(mysql, "customers")
@@ -110,10 +110,10 @@ public class WithMaterializedTest {
                                 new SnakeNamingConversition());
 
                 SelectSqlBuilder cte1 = SelectSqlBuilder.create(pg12, "expensive_query")
-                                .column("id", "complex_calculation(data) AS result");
+                                .columns("id", "complex_calculation(data) AS result");
 
                 SelectSqlBuilder cte2 = SelectSqlBuilder.create(pg12, "simple_query")
-                                .column("id", "name");
+                                .columns("id", "name");
 
                 SelectSqlBuilder main = SelectSqlBuilder.create(pg12, "final_table")
                                 .with("expensive_cte", cte1, MaterializationHint.MATERIALIZED)

@@ -46,7 +46,7 @@ public class SelectSqlBuilderTest {
   @DisplayName("基本 SELECT 查询")
   void testBasicSelect() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "users")
-        .column("id", "name", "email")
+        .columns("id", "name", "email")
         .eq("status", 1)
         .gt("age", 18)
         .orderBy("created_at", false)
@@ -64,7 +64,7 @@ public class SelectSqlBuilderTest {
   @DisplayName("JOIN 和 WHERE 条件")
   void testJoinAndWhere() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "users", "u")
-        .column("u.id", "u.name", "o.total")
+        .columns("u.id", "u.name", "o.total")
         .leftJoin("orders", "o", "u.id = o.user_id")
         .eqIfNotNull("u.status", 1)
         .like("u.name", "张")
@@ -94,7 +94,7 @@ public class SelectSqlBuilderTest {
   @DisplayName("GROUP BY 和 HAVING")
   void testGroupByHaving() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-        .column("user_id", "COUNT(*) AS order_count", "SUM(amount) AS total_amount")
+        .columns("user_id", "COUNT(*) AS order_count", "SUM(amount) AS total_amount")
         .eq("status", "completed")
         .groupBy("user_id")
         .havingCountGt(5)
@@ -115,11 +115,11 @@ public class SelectSqlBuilderTest {
   @DisplayName("UNION 查询")
   void testUnion() {
     SelectSqlBuilder query1 = SelectSqlBuilder.create(mysql, "users")
-        .column("name", "email")
+        .columns("name", "email")
         .eq("type", "admin");
 
     SelectSqlBuilder query2 = SelectSqlBuilder.create(mysql, "customers")
-        .column("name", "email")
+        .columns("name", "email")
         .eq("vip", 1);
 
     SelectSqlBuilder builder = query1.union(query2);
@@ -148,7 +148,7 @@ public class SelectSqlBuilderTest {
   void testComplexQuery() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "products", "p")
         .distinct()
-        .column("p.id", "p.name", "p.price", "c.name AS category_name")
+        .columns("p.id", "p.name", "p.price", "c.name AS category_name")
         .leftJoin("categories", "c", "p.category_id = c.id")
         .eqIfNotNull("p.status", 1)
         .gtIfNotNull("p.price", 100)

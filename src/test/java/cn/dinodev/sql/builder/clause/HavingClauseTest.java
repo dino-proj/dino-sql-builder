@@ -43,7 +43,7 @@ public class HavingClauseTest {
     @DisplayName("基本 HAVING")
     void testBasicHaving() {
         SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-                .column("user_id", "COUNT(*) AS cnt")
+                .columns("user_id", "COUNT(*) AS cnt")
                 .groupBy("user_id")
                 .having("COUNT(*) > 5");
 
@@ -55,7 +55,7 @@ public class HavingClauseTest {
     @DisplayName("使用操作符的 HAVING")
     void testHavingWithOperator() {
         SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-                .column("user_id", "SUM(amount) AS total")
+                .columns("user_id", "SUM(amount) AS total")
                 .groupBy("user_id")
                 .having("SUM(amount)", Oper.GTE, 1000);
 
@@ -68,7 +68,7 @@ public class HavingClauseTest {
     @DisplayName("多个 HAVING 条件（AND）")
     void testMultipleHaving() {
         SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-                .column("user_id", "COUNT(*) AS cnt", "SUM(amount) AS total")
+                .columns("user_id", "COUNT(*) AS cnt", "SUM(amount) AS total")
                 .groupBy("user_id")
                 .having("COUNT(*) > ?", 5)
                 .andHaving("SUM(amount) > ?", 1000);
@@ -83,7 +83,7 @@ public class HavingClauseTest {
     @DisplayName("OR HAVING")
     void testOrHaving() {
         SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-                .column("category", "COUNT(*) AS cnt", "SUM(amount) AS total")
+                .columns("category", "COUNT(*) AS cnt", "SUM(amount) AS total")
                 .groupBy("category")
                 .having("COUNT(*) > ?", 100)
                 .orHaving("SUM(amount) > ?", 10000);
@@ -98,7 +98,7 @@ public class HavingClauseTest {
     @DisplayName("COUNT 相关便捷方法")
     void testCountFunctions() {
         SelectSqlBuilder builderGt = SelectSqlBuilder.create(mysql, "orders")
-                .column("user_id", "COUNT(*) AS cnt")
+                .columns("user_id", "COUNT(*) AS cnt")
                 .groupBy("user_id")
                 .havingCountGt(10);
         assertSqlWithParams(builderGt, "havingCountGt",
@@ -106,7 +106,7 @@ public class HavingClauseTest {
                 new Object[] { 10L });
 
         SelectSqlBuilder builderGte = SelectSqlBuilder.create(mysql, "orders")
-                .column("user_id", "COUNT(*) AS cnt")
+                .columns("user_id", "COUNT(*) AS cnt")
                 .groupBy("user_id")
                 .havingCountGte(5);
         assertSqlWithParams(builderGte, "havingCountGte",
@@ -114,7 +114,7 @@ public class HavingClauseTest {
                 new Object[] { 5L });
 
         SelectSqlBuilder builderLt = SelectSqlBuilder.create(mysql, "orders")
-                .column("user_id", "COUNT(*) AS cnt")
+                .columns("user_id", "COUNT(*) AS cnt")
                 .groupBy("user_id")
                 .havingCountLt(100);
         assertSqlWithParams(builderLt, "havingCountLt",
@@ -122,7 +122,7 @@ public class HavingClauseTest {
                 new Object[] { 100L });
 
         SelectSqlBuilder builderEq = SelectSqlBuilder.create(mysql, "orders")
-                .column("user_id", "COUNT(*) AS cnt")
+                .columns("user_id", "COUNT(*) AS cnt")
                 .groupBy("user_id")
                 .havingCountEq(20);
         assertSqlWithParams(builderEq, "havingCountEq",
@@ -130,7 +130,7 @@ public class HavingClauseTest {
                 new Object[] { 20L });
 
         SelectSqlBuilder builderNe = SelectSqlBuilder.create(mysql, "orders")
-                .column("user_id", "COUNT(*) AS cnt")
+                .columns("user_id", "COUNT(*) AS cnt")
                 .groupBy("user_id")
                 .havingCountNe(0);
         assertSqlWithParams(builderNe, "havingCountNe",
@@ -142,21 +142,21 @@ public class HavingClauseTest {
     @DisplayName("SUM 相关便捷方法")
     void testSumFunctions() {
         SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysql, "orders")
-                .column("user_id", "SUM(amount) AS total")
+                .columns("user_id", "SUM(amount) AS total")
                 .groupBy("user_id")
                 .havingSumGt("amount", 1000);
         assertSql(builder1, "havingSumGt",
                 "SELECT user_id, SUM(amount) AS total FROM orders GROUP BY user_id HAVING SUM(amount) > ?");
 
         SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysql, "orders")
-                .column("user_id", "SUM(amount) AS total")
+                .columns("user_id", "SUM(amount) AS total")
                 .groupBy("user_id")
                 .havingSumGte("amount", 500);
         assertSql(builder2, "havingSumGte",
                 "SELECT user_id, SUM(amount) AS total FROM orders GROUP BY user_id HAVING SUM(amount) >= ?");
 
         SelectSqlBuilder builder3 = SelectSqlBuilder.create(mysql, "orders")
-                .column("user_id", "SUM(amount) AS total")
+                .columns("user_id", "SUM(amount) AS total")
                 .groupBy("user_id")
                 .havingSumLt("amount", 10000);
         assertSql(builder3, "havingSumLt",
@@ -167,21 +167,21 @@ public class HavingClauseTest {
     @DisplayName("AVG 相关便捷方法")
     void testAvgFunctions() {
         SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysql, "students")
-                .column("class_id", "AVG(score) AS avg_score")
+                .columns("class_id", "AVG(score) AS avg_score")
                 .groupBy("class_id")
                 .havingAvgGt("score", 60);
         assertSql(builder1, "havingAvgGt",
                 "SELECT class_id, AVG(score) AS avg_score FROM students GROUP BY class_id HAVING AVG(score) > ?");
 
         SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysql, "students")
-                .column("class_id", "AVG(score) AS avg_score")
+                .columns("class_id", "AVG(score) AS avg_score")
                 .groupBy("class_id")
                 .havingAvgGte("score", 70);
         assertSql(builder2, "havingAvgGte",
                 "SELECT class_id, AVG(score) AS avg_score FROM students GROUP BY class_id HAVING AVG(score) >= ?");
 
         SelectSqlBuilder builder3 = SelectSqlBuilder.create(mysql, "students")
-                .column("class_id", "AVG(score) AS avg_score")
+                .columns("class_id", "AVG(score) AS avg_score")
                 .groupBy("class_id")
                 .havingAvgLte("score", 90);
         assertSql(builder3, "havingAvgLte",
@@ -192,21 +192,21 @@ public class HavingClauseTest {
     @DisplayName("MAX/MIN 相关便捷方法")
     void testMaxMinFunctions() {
         SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysql, "products")
-                .column("category_id", "MAX(price) AS max_price")
+                .columns("category_id", "MAX(price) AS max_price")
                 .groupBy("category_id")
                 .havingMaxGt("price", 100);
         assertSql(builder1, "havingMaxGt",
                 "SELECT category_id, MAX(price) AS max_price FROM products GROUP BY category_id HAVING MAX(price) > ?");
 
         SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysql, "products")
-                .column("category_id", "MIN(price) AS min_price")
+                .columns("category_id", "MIN(price) AS min_price")
                 .groupBy("category_id")
                 .havingMinGte("price", 10);
         assertSql(builder2, "havingMinGte",
                 "SELECT category_id, MIN(price) AS min_price FROM products GROUP BY category_id HAVING MIN(price) >= ?");
 
         SelectSqlBuilder builder3 = SelectSqlBuilder.create(mysql, "products")
-                .column("category_id", "MAX(price) AS max_price", "MIN(price) AS min_price")
+                .columns("category_id", "MAX(price) AS max_price", "MIN(price) AS min_price")
                 .groupBy("category_id")
                 .havingMaxLt("price", 1000)
                 .andHaving("MIN(price) > ?", 5);
@@ -223,7 +223,7 @@ public class HavingClauseTest {
         boolean skipFilter = false;
 
         SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-                .column("user_id", "COUNT(*) AS cnt", "SUM(amount) AS total")
+                .columns("user_id", "COUNT(*) AS cnt", "SUM(amount) AS total")
                 .groupBy("user_id")
                 .havingCountGtIf(needFilter, 10)
                 .havingSumGtIf(skipFilter, "amount", 1000)

@@ -114,7 +114,7 @@ public class RegexpWhereClauseTest {
   @DisplayName("实际场景 - 邮箱和手机号验证")
   void testEmailPhoneValidation() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "users")
-        .column("id", "name", "email", "phone")
+        .columns("id", "name", "email", "phone")
         .eq("status", 1)
         .regexp("email", "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
         .regexp("phone", "^1[3-9]\\d{9}$");

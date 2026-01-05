@@ -43,7 +43,7 @@ public class ParameterizedTestExample {
   @DisplayName("不同字段的 GROUP BY")
   public void testGroupByWithDifferentFields(String field) {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "orders")
-        .column(field, "COUNT(*) AS cnt")
+        .columns(field, "COUNT(*) AS cnt")
         .groupBy(field);
 
     String sql = builder.getSql();
@@ -64,7 +64,7 @@ public class ParameterizedTestExample {
   @DisplayName("不同的 LIMIT 和 OFFSET 组合")
   public void testLimitOffsetCombinations(int limit, int offset) {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "users")
-        .column("id", "name")
+        .columns("id", "name")
         .limit(limit);
 
     if (offset > 0) {
@@ -91,7 +91,7 @@ public class ParameterizedTestExample {
   @DisplayName("不同列和排序方向的组合")
   public void testOrderByDirections(String column, String direction) {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "users")
-        .column("id", column)
+        .columns("id", column)
         .orderBy(column + " " + direction);
 
     assertSql(builder, "ORDER BY " + column + " " + direction,

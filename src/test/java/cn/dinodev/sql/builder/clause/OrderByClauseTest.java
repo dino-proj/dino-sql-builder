@@ -43,7 +43,7 @@ public class OrderByClauseTest {
   @DisplayName("基本排序")
   void testBasicOrderBy() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "users")
-        .column("id", "name", "age")
+        .columns("id", "name", "age")
         .orderBy("age DESC");
 
     assertSql(builder, "基本排序",
@@ -57,7 +57,7 @@ public class OrderByClauseTest {
   @DisplayName("多列排序")
   void testMultipleOrderBy() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "users")
-        .column("id", "name", "age")
+        .columns("id", "name", "age")
         .orderBy("age DESC", "name ASC");
 
     assertSql(builder, "多列排序",
@@ -71,7 +71,7 @@ public class OrderByClauseTest {
   @DisplayName("orderByAsc 和 orderByDesc")
   void testOrderByAscDesc() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "users")
-        .column("id", "name", "age", "created_at")
+        .columns("id", "name", "age", "created_at")
         .orderByDesc("created_at")
         .orderByAsc("name");
 
@@ -87,7 +87,7 @@ public class OrderByClauseTest {
   void testOrderByCondition() {
     boolean sortByAge = true;
     SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysql, "users")
-        .column("id", "name", "age")
+        .columns("id", "name", "age")
         .orderByIf(sortByAge, "age DESC")
         .orderBy("name ASC");
 
@@ -96,7 +96,7 @@ public class OrderByClauseTest {
 
     sortByAge = false;
     SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysql, "users")
-        .column("id", "name", "age")
+        .columns("id", "name", "age")
         .orderByIf(sortByAge, "age DESC")
         .orderBy("name ASC");
 

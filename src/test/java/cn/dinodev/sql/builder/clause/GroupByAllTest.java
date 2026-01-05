@@ -87,7 +87,7 @@ public class GroupByAllTest {
           DatabaseMetaDataMocks.createPostgreSQL(17),
           new CamelNamingConversition());
       SelectSqlBuilder builder = SelectSqlBuilder.create(pg17, "sales")
-          .column("region", "product", "COUNT(*) AS count", "SUM(amount) AS total")
+          .columns("region", "product", "COUNT(*) AS count", "SUM(amount) AS total")
           .gt("amount", 100)
           .groupByAll()
           .orderByDesc("total");
@@ -108,7 +108,7 @@ public class GroupByAllTest {
           DatabaseMetaDataMocks.createPostgreSQL(14),
           new CamelNamingConversition());
       SelectSqlBuilder.create(pg14, "sales")
-          .column("region", "product", "COUNT(*) AS count")
+          .columns("region", "product", "COUNT(*) AS count")
           .groupByAll();
     });
   }
@@ -118,7 +118,7 @@ public class GroupByAllTest {
   void testMySQLGroupByAllException() {
     assertThrows(UnsupportedOperationException.class, () -> {
       SelectSqlBuilder.create(mysqlDialect, "sales")
-          .column("region", "product", "COUNT(*) AS count")
+          .columns("region", "product", "COUNT(*) AS count")
           .groupByAll();
     });
   }

@@ -154,7 +154,7 @@ public class MultiColumnWhereClauseTest {
   void testMultiFieldSearch() {
     String keyword = "张三";
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "users")
-        .column("id", "name", "email", "phone")
+        .columns("id", "name", "email", "phone")
         .eq("status", 1)
         .some(new String[] { "name", "email", "phone" }, Oper.LIKE, "%" + keyword + "%")
         .isNotNull("deleted_at", Logic.AND);

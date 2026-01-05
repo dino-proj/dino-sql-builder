@@ -42,11 +42,11 @@ public class UnionClauseTest {
     @DisplayName("测试基础UNION")
     void testBasicUnion() {
         SelectSqlBuilder builder1 = SelectSqlBuilder.create(dialect, "users")
-                .column("id", "name")
+                .columns("id", "name")
                 .where("age > ?", 18);
 
         SelectSqlBuilder builder2 = SelectSqlBuilder.create(dialect, "customers")
-                .column("id", "name")
+                .columns("id", "name")
                 .where("status = ?", 1);
 
         builder1.union(builder2);
@@ -59,10 +59,10 @@ public class UnionClauseTest {
     @DisplayName("测试UNION ALL")
     void testUnionAll() {
         SelectSqlBuilder builder1 = SelectSqlBuilder.create(dialect, "users")
-                .column("id", "name");
+                .columns("id", "name");
 
         SelectSqlBuilder builder2 = SelectSqlBuilder.create(dialect, "customers")
-                .column("id", "name");
+                .columns("id", "name");
 
         builder1.unionAll(builder2);
 
@@ -74,13 +74,13 @@ public class UnionClauseTest {
     @DisplayName("测试多个UNION")
     void testMultipleUnions() {
         SelectSqlBuilder builder1 = SelectSqlBuilder.create(dialect, "users")
-                .column("id", "name");
+                .columns("id", "name");
 
         SelectSqlBuilder builder2 = SelectSqlBuilder.create(dialect, "customers")
-                .column("id", "name");
+                .columns("id", "name");
 
         SelectSqlBuilder builder3 = SelectSqlBuilder.create(dialect, "vendors")
-                .column("id", "name");
+                .columns("id", "name");
 
         builder1.union(builder2).union(builder3);
 
@@ -92,10 +92,10 @@ public class UnionClauseTest {
     @DisplayName("测试UNION与ORDER BY")
     void testUnionWithOrderBy() {
         SelectSqlBuilder builder1 = SelectSqlBuilder.create(dialect, "users")
-                .column("id", "name");
+                .columns("id", "name");
 
         SelectSqlBuilder builder2 = SelectSqlBuilder.create(dialect, "customers")
-                .column("id", "name");
+                .columns("id", "name");
 
         builder1.union(builder2).orderBy("name", true);
 

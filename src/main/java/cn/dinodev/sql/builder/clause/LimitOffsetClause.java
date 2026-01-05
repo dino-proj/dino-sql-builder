@@ -48,23 +48,6 @@ public interface LimitOffsetClause<T extends SqlBuilder> extends ClauseSupport<T
   }
 
   /**
-   * 设置 OFFSET 偏移量。
-   * <p>
-   * 示例：
-   * <pre>
-   * builder.limit(10).offset(20);
-   * // MySQL/PostgreSQL: SELECT ... LIMIT 10 OFFSET 20
-   * </pre>
-   * 
-   * @param offset 偏移量，必须 >= 0
-   * @return 构建器本身
-   */
-  default T offset(long offset) {
-    innerLimitOffsetHolder().setOffset(offset);
-    return self();
-  }
-
-  /**
    * 设置 LIMIT 和 OFFSET（用于分页）。
    * <p>
    * 便捷方法，等效于先调用 limit(limit) 再调用 offset(offset)。
@@ -79,9 +62,26 @@ public interface LimitOffsetClause<T extends SqlBuilder> extends ClauseSupport<T
    * @param offset 偏移量
    * @return 构建器本身
    */
-  default T limitOffset(int limit, long offset) {
-    limit(limit);
-    offset(offset);
+  default T limit(int limit, long offset) {
+    innerLimitOffsetHolder().setLimit(limit);
+    innerLimitOffsetHolder().setOffset(offset);
+    return self();
+  }
+
+  /**
+   * 设置 OFFSET 偏移量。
+   * <p>
+   * 示例：
+   * <pre>
+   * builder.limit(10).offset(20);
+   * // MySQL/PostgreSQL: SELECT ... LIMIT 10 OFFSET 20
+   * </pre>
+   * 
+   * @param offset 偏移量，必须 >= 0
+   * @return 构建器本身
+   */
+  default T offset(long offset) {
+    innerLimitOffsetHolder().setOffset(offset);
     return self();
   }
 
@@ -106,7 +106,7 @@ public interface LimitOffsetClause<T extends SqlBuilder> extends ClauseSupport<T
       page = 1;
     }
     long offset = (long) (page - 1) * pageSize;
-    return limitOffset(pageSize, offset);
+    return limit(pageSize, offset);
   }
 
   /**
@@ -269,7 +269,7 @@ public interface LimitOffsetClause<T extends SqlBuilder> extends ClauseSupport<T
       page = 0;
     }
     long offset = (long) page * pageSize;
-    return limitOffset(pageSize, offset);
+    return limit(pageSize, offset);
   }
 
   /**

@@ -65,7 +65,7 @@ public interface JoinClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * 示例：
    * <pre>
    * SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "users")
-   *     .column("users.name", "orders.total")
+  *     .columns("users.name", "orders.total")
    *     .innerJoin("orders", "users.id = orders.user_id");
    * </pre>
    * 
@@ -84,7 +84,7 @@ public interface JoinClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * 示例：
    * <pre>
    * SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "users")
-   *     .column("users.name", "orders.total")
+  *     .columns("users.name", "orders.total")
    *     .leftJoin("orders", "users.id = orders.user_id");
    * </pre>
    * 
@@ -103,7 +103,7 @@ public interface JoinClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * 示例：
    * <pre>
    * SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "orders")
-   *     .column("orders.total", "users.name")
+  *     .columns("orders.total", "users.name")
    *     .rightJoin("users", "orders.user_id = users.id");
    * </pre>
    * 
@@ -122,7 +122,7 @@ public interface JoinClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * 示例：
    * <pre>
    * SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "orders")
-   *     .column("orders.id", "users.name")
+  *     .columns("orders.id", "users.name")
    *     .fullJoin("users", "orders.user_id = users.id");
    * </pre>
    * 
@@ -141,7 +141,7 @@ public interface JoinClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * 示例：
    * <pre>
    * SelectSqlBuilder builder = SelectSqlBuilder.create(dialect, "colors")
-   *     .column("colors.name", "sizes.name")
+  *     .columns("colors.name", "sizes.name")
    *     .crossJoin("sizes");
    * </pre>
    * 

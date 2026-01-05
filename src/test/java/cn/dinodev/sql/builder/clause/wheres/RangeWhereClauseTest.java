@@ -162,7 +162,7 @@ public class RangeWhereClauseTest {
   @DisplayName("组合测试 - 范围和集合查询")
   void testCombined() {
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "products")
-        .column("id", "name", "price", "category_id")
+        .columns("id", "name", "price", "category_id")
         .between("price", 100, 500)
         .in("category_id", Arrays.asList(1, 2, 3))
         .notIn("status", Arrays.asList(0, -1));
@@ -178,7 +178,7 @@ public class RangeWhereClauseTest {
     Integer minPrice = 100;
     Integer maxPrice = 1000;
     SelectSqlBuilder builder = SelectSqlBuilder.create(mysql, "products")
-        .column("id", "name", "price")
+        .columns("id", "name", "price")
         .eq("status", 1)
         .between("price", minPrice, maxPrice)
         .in("category_id", Arrays.asList(1, 2, 3));

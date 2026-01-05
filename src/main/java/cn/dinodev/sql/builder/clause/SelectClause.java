@@ -27,22 +27,48 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
   InnerSelectHolder innerSelectHolder();
 
   /**
-   * 选择列。
+   * 选择多列。
    * <p>
    * 支持多种格式：
    * <ul>
-   *   <li>单列：column("id")</li>
-   *   <li>多列：column("id", "name", "age")</li>
-   *   <li>带别名：column("user_id AS id")</li>
-   *   <li>表达式：column("COUNT(*) AS cnt")</li>
-   *   <li>所有列：column("*")</li>
+   *   <li>多列：columns("id", "name", "age")</li>
+   *   <li>带别名：columns("user_id AS id", "user_name AS name")</li>
+   *   <li>表达式：columns("COUNT(*) AS cnt", "SUM(score) AS total")</li>
+   *   <li>所有列：columns("*")</li>
    * </ul>
    * 
    * @param columns 列名或表达式
    * @return 构建器本身
    */
-  default T column(String... columns) {
+  default T columns(CharSequence... columns) {
     innerSelectHolder().addColumns(columns);
+    return self();
+  }
+
+  /**
+   * 条件选择列，仅当条件为真时添加。
+   * 
+   * @param condition 条件
+   * @param columns 列名或表达式
+   * @return 构建器本身
+   */
+  default T columnsIf(boolean condition, String... columns) {
+    if (condition) {
+      this.columns(columns);
+    }
+    return self();
+  }
+
+  /**
+   * 选择单列（快捷方式）。
+   * <p>
+   * 等价于 columns(column)
+   * 
+   * @param column 列名或表达式
+   * @return 构建器本身
+   */
+  default T column(CharSequence column) {
+    innerSelectHolder().addColumns(column);
     return self();
   }
 
@@ -53,8 +79,9 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * @param alias 别名
    * @return 构建器本身
    */
-  default T columnWithAlias(String column, String alias) {
-    return column(column + " AS " + alias);
+  default T columnAs(CharSequence column, String alias) {
+    innerSelectHolder().addColumns(column + " AS " + alias);
+    return self();
   }
 
   /**
@@ -63,20 +90,7 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * @return 构建器本身
    */
   default T selectAll() {
-    return column("*");
-  }
-
-  /**
-   * 条件选择列，仅当条件为真时添加。
-   * 
-   * @param condition 条件
-   * @param columns 列名或表达式
-   * @return 构建器本身
-   */
-  default T columnIf(boolean condition, String... columns) {
-    if (condition) {
-      column(columns);
-    }
+    innerSelectHolder().addColumns("*");
     return self();
   }
 
@@ -88,8 +102,9 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * @param alias 别名
    * @return 构建器本身
    */
-  default T aggregate(String function, String column, String alias) {
-    return column(function + "(" + column + ") AS " + alias);
+  default T columnAggregate(String function, CharSequence column, String alias) {
+    innerSelectHolder().addColumns(function + "(" + column + ") AS " + alias);
+    return self();
   }
 
   /**
@@ -98,8 +113,8 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * @param alias 别名
    * @return 构建器本身
    */
-  default T count(String alias) {
-    return aggregate("COUNT", "*", alias);
+  default T columnCount(String alias) {
+    return columnAggregate("COUNT", "1", alias);
   }
 
   /**
@@ -109,7 +124,7 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * @param alias 别名
    * @return 构建器本身
    */
-  default T countDistinct(String column, String alias) {
+  default T columnCountDistinct(CharSequence column, String alias) {
     return column("COUNT(DISTINCT " + column + ") AS " + alias);
   }
 
@@ -120,8 +135,8 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * @param alias 别名
    * @return 构建器本身
    */
-  default T sum(String column, String alias) {
-    return aggregate("SUM", column, alias);
+  default T columnSum(CharSequence column, String alias) {
+    return columnAggregate("SUM", column, alias);
   }
 
   /**
@@ -131,8 +146,8 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * @param alias 别名
    * @return 构建器本身
    */
-  default T avg(String column, String alias) {
-    return aggregate("AVG", column, alias);
+  default T columnAvg(CharSequence column, String alias) {
+    return columnAggregate("AVG", column, alias);
   }
 
   /**
@@ -142,8 +157,8 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * @param alias 别名
    * @return 构建器本身
    */
-  default T max(String column, String alias) {
-    return aggregate("MAX", column, alias);
+  default T columnMax(CharSequence column, String alias) {
+    return columnAggregate("MAX", column, alias);
   }
 
   /**
@@ -153,8 +168,8 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * @param alias 别名
    * @return 构建器本身
    */
-  default T min(String column, String alias) {
-    return aggregate("MIN", column, alias);
+  default T columnMin(CharSequence column, String alias) {
+    return columnAggregate("MIN", column, alias);
   }
 
   /**
@@ -195,7 +210,7 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * @since 2024-12-02
    */
   class InnerSelectHolder {
-    private final List<String> columns = new java.util.ArrayList<>();
+    private final List<CharSequence> columns = new java.util.ArrayList<>();
     private boolean distinct = false;
 
     /**
@@ -203,10 +218,10 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
      * 
      * @param cols 列名或表达式
      */
-    public void addColumns(String... cols) {
+    public void addColumns(CharSequence... cols) {
       if (cols != null && cols.length > 0) {
-        for (String col : cols) {
-          if (col != null && !col.trim().isEmpty()) {
+        for (CharSequence col : cols) {
+          if (col != null && !col.isEmpty()) {
             columns.add(col);
           }
         }
@@ -229,15 +244,6 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
      */
     public boolean isDistinct() {
       return distinct;
-    }
-
-    /**
-     * 获取所有列。
-     * 
-     * @return 列列表
-     */
-    public List<String> getColumns() {
-      return columns;
     }
 
     /**
@@ -277,7 +283,7 @@ public interface SelectClause<T extends SqlBuilder> extends ClauseSupport<T> {
         sql.append('*');
       } else {
         boolean first = true;
-        for (String col : columns) {
+        for (CharSequence col : columns) {
           if (!first) {
             sql.append(", ");
           }

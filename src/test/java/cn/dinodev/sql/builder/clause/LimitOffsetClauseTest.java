@@ -44,14 +44,14 @@ public class LimitOffsetClauseTest {
         @DisplayName("测试基本LIMIT/OFFSET功能")
         void testBasicLimitOffset() {
                 SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .limit(10);
 
                 assertSql(builder1, "基本 LIMIT",
                                 "SELECT id, name FROM users LIMIT 10");
 
                 SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .limit(10)
                                 .offset(20);
 
@@ -59,8 +59,8 @@ public class LimitOffsetClauseTest {
                                 "SELECT id, name FROM users LIMIT 10 OFFSET 20");
 
                 SelectSqlBuilder builder3 = SelectSqlBuilder.create(postgresDialect, "users")
-                                .column("id", "name")
-                                .limitOffset(15, 30);
+                                .columns("id", "name")
+                                .limit(15, 30);
 
                 assertSql(builder3, "limitOffset",
                                 "SELECT id, name FROM users LIMIT 15 OFFSET 30");
@@ -70,21 +70,21 @@ public class LimitOffsetClauseTest {
         @DisplayName("测试分页查询")
         void testLimitPage() {
                 SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysqlDialect, "products")
-                                .column("id", "name", "price")
+                                .columns("id", "name", "price")
                                 .limitPage(1, 10);
 
                 assertSql(builder1, "第1页",
                                 "SELECT id, name, price FROM products LIMIT 10");
 
                 SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysqlDialect, "products")
-                                .column("id", "name", "price")
+                                .columns("id", "name", "price")
                                 .limitPage(3, 10);
 
                 assertSql(builder2, "第3页",
                                 "SELECT id, name, price FROM products LIMIT 10 OFFSET 20");
 
                 SelectSqlBuilder builder3 = SelectSqlBuilder.create(mysqlDialect, "products")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .limitPage(0, 5);
 
                 assertSql(builder3, "页码<1自动修正",
@@ -96,7 +96,7 @@ public class LimitOffsetClauseTest {
         void testConditionalMethods() {
                 boolean needLimit = true;
                 SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .limitIf(needLimit, 100);
 
                 assertSql(builder1, "limitIf (true)",
@@ -104,7 +104,7 @@ public class LimitOffsetClauseTest {
 
                 needLimit = false;
                 SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .limitIf(needLimit, 100);
 
                 assertSql(builder2, "limitIf (false)",
@@ -112,7 +112,7 @@ public class LimitOffsetClauseTest {
 
                 boolean hasOffset = true;
                 SelectSqlBuilder builder3 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .limit(10)
                                 .offsetIf(hasOffset, 50);
 
@@ -121,7 +121,7 @@ public class LimitOffsetClauseTest {
 
                 boolean enablePaging = true;
                 SelectSqlBuilder builder4 = SelectSqlBuilder.create(mysqlDialect, "orders")
-                                .column("id", "amount")
+                                .columns("id", "amount")
                                 .limitPageIf(enablePaging, 2, 20);
 
                 assertSql(builder4, "limitPageIf (true)",
@@ -129,7 +129,7 @@ public class LimitOffsetClauseTest {
 
                 enablePaging = false;
                 SelectSqlBuilder builder5 = SelectSqlBuilder.create(mysqlDialect, "orders")
-                                .column("id", "amount")
+                                .columns("id", "amount")
                                 .limitPageIf(enablePaging, 2, 20);
 
                 assertSql(builder5, "limitPageIf (false)",
@@ -140,7 +140,7 @@ public class LimitOffsetClauseTest {
         @DisplayName("测试skip跳过方法")
         void testSkipMethods() {
                 SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .limit(10)
                                 .skip(15);
 
@@ -149,7 +149,7 @@ public class LimitOffsetClauseTest {
 
                 boolean shouldSkip = true;
                 SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .limit(10)
                                 .skipIf(shouldSkip, 25);
 
@@ -158,7 +158,7 @@ public class LimitOffsetClauseTest {
 
                 shouldSkip = false;
                 SelectSqlBuilder builder3 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .limit(10)
                                 .skipIf(shouldSkip, 25);
 
@@ -170,21 +170,21 @@ public class LimitOffsetClauseTest {
         @DisplayName("测试从0开始的分页")
         void testLimitPageZeroBased() {
                 SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysqlDialect, "products")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .limitPageZeroBased(0, 10);
 
                 assertSql(builder1, "第0页 (0-based)",
                                 "SELECT id, name FROM products LIMIT 10");
 
                 SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysqlDialect, "products")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .limitPageZeroBased(2, 10);
 
                 assertSql(builder2, "第2页 (0-based)",
                                 "SELECT id, name FROM products LIMIT 10 OFFSET 20");
 
                 SelectSqlBuilder builder3 = SelectSqlBuilder.create(mysqlDialect, "products")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .limitPageZeroBased(-1, 5);
 
                 assertSql(builder3, "页码<0自动修正",
@@ -195,14 +195,14 @@ public class LimitOffsetClauseTest {
         @DisplayName("测试便捷方法和边界情况")
         void testEdgeCases() {
                 SelectSqlBuilder builder1 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .limitFirst();
 
                 assertSql(builder1, "limitFirst",
                                 "SELECT id, name FROM users LIMIT 1");
 
                 SelectSqlBuilder builder2 = SelectSqlBuilder.create(mysqlDialect, "products")
-                                .column("id", "name", "price")
+                                .columns("id", "name", "price")
                                 .orderBy("price DESC")
                                 .limitTop(5);
 
@@ -211,7 +211,7 @@ public class LimitOffsetClauseTest {
 
                 boolean findOne = true;
                 SelectSqlBuilder builder3 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .where("email = ?", "test@example.com")
                                 .limitFirstIf(findOne);
 
@@ -220,7 +220,7 @@ public class LimitOffsetClauseTest {
 
                 findOne = false;
                 SelectSqlBuilder builder4 = SelectSqlBuilder.create(mysqlDialect, "users")
-                                .column("id", "name")
+                                .columns("id", "name")
                                 .where("email = ?", "test@example.com")
                                 .limitFirstIf(findOne);
 
@@ -228,7 +228,7 @@ public class LimitOffsetClauseTest {
                                 "SELECT id, name FROM users WHERE email = ?");
 
                 SelectSqlBuilder builder5 = SelectSqlBuilder.create(postgresDialect, "orders")
-                                .column("id", "customer_id", "amount", "created_at")
+                                .columns("id", "customer_id", "amount", "created_at")
                                 .where("status = ?", "completed")
                                 .orderBy("created_at DESC")
                                 .limitPage(2, 25);

@@ -61,11 +61,11 @@ public interface UnionClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * 示例：
    * <pre>
    * SelectSqlBuilder query1 = SelectSqlBuilder.create(dialect, "orders")
-   *     .column("id", "amount")
+  *     .columns("id", "amount")
    *     .where("status", "=", "completed");
    * 
    * SelectSqlBuilder query2 = SelectSqlBuilder.create(dialect, "refunds")
-   *     .column("id", "amount")
+  *     .columns("id", "amount")
    *     .where("status", "=", "approved");
    * 
    * SelectSqlBuilder combined = query1.union(query2);
@@ -85,11 +85,11 @@ public interface UnionClause<T extends SqlBuilder> extends ClauseSupport<T> {
    * 示例：
    * <pre>
    * SelectSqlBuilder query1 = SelectSqlBuilder.create(dialect, "orders")
-   *     .column("id", "amount")
+  *     .columns("id", "amount")
    *     .where("year", "=", 2023);
    * 
    * SelectSqlBuilder query2 = SelectSqlBuilder.create(dialect, "orders")
-   *     .column("id", "amount")
+  *     .columns("id", "amount")
    *     .where("year", "=", 2024);
    * 
    * SelectSqlBuilder combined = query1.unionAll(query2);
