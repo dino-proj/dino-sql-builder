@@ -159,7 +159,6 @@ public class PostgreSQLJsonDialect implements JsonDialect {
    * 
    * @param type JSON 数据类型
    * @param column 列名或表达式
-   * @param path JSON 路径（PostgreSQL 格式：{a,b,c}）
    * @param path JSON 路径对象
    * @param createMissing 是否创建缺失的路径
    * @return jsonb_set(column, '{path}', ?::jsonb, createMissing)
