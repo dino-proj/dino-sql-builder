@@ -27,7 +27,6 @@ import cn.dinodev.sql.utils.StringUtils;
  *   <li><b>PostgreSQL 18+</b>: 支持uuidv7()内置函数，基于时间戳的UUID v7生成</li>
  * </ul>
  * <p>
- * 使用工厂方法 {@link #of(DatabaseMetaData, NamingConversition)} 自动根据版本创建对应的方言实例。
  *
  * @author Cody Lu
  * @since 2022-03-07
