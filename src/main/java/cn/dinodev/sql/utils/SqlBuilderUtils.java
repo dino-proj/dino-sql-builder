@@ -18,6 +18,13 @@ import cn.dinodev.sql.Oper;
 public final class SqlBuilderUtils {
 
   /**
+   * 私有构造函数，防止实例化工具类。
+   */
+  private SqlBuilderUtils() {
+    throw new UnsupportedOperationException("Utility class cannot be instantiated");
+  }
+
+  /**
    * 拼接列表为 SQL 片段。
    *
    * @param sql  用于追加字符串的 StringBuilder
